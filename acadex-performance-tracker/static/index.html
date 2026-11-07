@@ -1,0 +1,2121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Acadex · Performance Tracker</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <!-- Chart.js loaded from cdnjs (pinned version 4.4.1) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f4f6fb; color: #1c2333; }
+    header { background: #1d3a8a; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+    header h2 { margin: 0; font-size: 20px; font-weight: 600; }
+    .header-user { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+    .user-pill { background: rgba(255,255,255,0.15); padding: 5px 12px; border-radius: 99px; }
+    .btn-logout { background: #fff; color: #1d3a8a; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-logout:hover { background: #e0e7ff; }
+
+    /* Two-Column Dashboard Layout */
+    main.dashboard-layout {
+      max-width: 1440px;
+      margin: 20px auto;
+      padding: 0 16px;
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    /* Left Column: Fixed-width (320px), sticky, independently scrolling sidebar */
+    .sidebar {
+      width: 320px;
+      position: sticky;
+      top: 20px;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-right: 4px;
+    }
+    .sidebar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .sidebar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+
+    /* Accordion Section */
+    .accordion-section {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .accordion-header {
+      width: 100%;
+      background: #fff;
+      border: none;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      color: #1d3a8a;
+      text-align: left;
+      transition: background 0.15s;
+    }
+    .accordion-header:hover {
+      background: #f8fafc;
+    }
+    .accordion-header .acc-icon {
+      font-size: 11px;
+      color: #64748b;
+      font-weight: 700;
+      transition: transform 0.2s;
+    }
+    .accordion-body {
+      padding: 14px 16px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    /* Form Fields in Sidebar */
+    .form-group {
+      margin-bottom: 10px;
+    }
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .plan-inputs-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    label { font-size: 11px; display: block; color: #555; margin-bottom: 3px; font-weight: 600; }
+    input, select, button { padding: 8px 10px; border: 1px solid #ccd; border-radius: 6px; font-size: 13px; }
+    input:focus, select:focus { outline: none; border-color: #1d3a8a; }
+    button.primary-btn { background: #1d3a8a; color: #fff; border: none; cursor: pointer; font-weight: 600; padding: 8px 14px; }
+    button.primary-btn:hover { background: #162d6b; }
+    
+    .field-error {
+      color: #b00020;
+      font-size: 11px;
+      margin-top: 2px;
+      min-height: 15px;
+    }
+    input.invalid, select.invalid {
+      border-color: #b00020;
+      background: #fff5f5;
+    }
+    .alert-success {
+      background: #dff5e3;
+      color: #176b2c;
+      border: 1px solid #c3e6cb;
+      padding: 7px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+    .alert-error {
+      background: #fde2e2;
+      color: #b00020;
+      border: 1px solid #f9bcbc;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    /* Right Column: Main Area */
+    .main-content {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .bar { display: flex; gap: 14px; flex-wrap: wrap; align-items: end; background: #fff; padding: 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .search-bar { display: flex; gap: 10px; align-items: center; background: #fff; padding: 12px 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    
+    .cards { display: flex; gap: 12px; }
+    .card { flex: 1; background: #fff; padding: 14px; border-radius: 10px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .card b { font-size: 28px; display: block; margin-bottom: 4px; }
+    .card.crit b { color: #b00020; }
+    .card.warn b { color: #8a5a00; }
+    .card.ok b { color: #176b2c; }
+
+    /* Assessment Plan Card Styles */
+    .assessment-plan-card {
+      background: #fff;
+      padding: 16px 20px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .plan-chip-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .plan-chip {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .plan-chip-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 2px;
+    }
+    .plan-chip-val {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1d3a8a;
+    }
+    .plan-chip-sub {
+      font-size: 10px;
+      color: #94a3b8;
+    }
+    .badge-pending {
+      color: #64748b;
+      background: #f1f5f9;
+      border: 1px solid #e2e8f0;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      display: inline-block;
+    }
+    .cell-low {
+      color: #b00020;
+      font-weight: 700;
+    }
+    .cell-ok {
+      color: #1e293b;
+      font-weight: 600;
+    }
+
+    /* Charts Row */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 16px;
+    }
+    .chart-box {
+      background: #fff;
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #1d3a8a;
+      margin: 0 0 10px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .chart-hint {
+      font-size: 11px;
+      font-weight: normal;
+      color: #64748b;
+    }
+    .ranking-scroll-container {
+      position: relative;
+      flex: 1;
+      max-height: 290px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      border: 1px solid #f1f5f9;
+      border-radius: 6px;
+      background: #fafbfc;
+    }
+
+    /* Table container & responsive styling */
+    .table-container {
+      overflow-x: auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    table {
+      width: 100%;
+      min-width: 980px;
+      border-collapse: collapse;
+      background: #fff;
+    }
+    th, td {
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+      font-size: 13px;
+    }
+    th {
+      background: #f8fafc;
+      font-weight: 600;
+      color: #334155;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    tbody tr.clickable-row { cursor: pointer; transition: background 0.15s; }
+    tbody tr.clickable-row:hover { background: #f0f4ff; }
+
+    .badge { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+    .critical { background: #fde2e2; color: #b00020; }
+    .warning { background: #fff1d6; color: #8a5a00; }
+    .ok { background: #dff5e3; color: #176b2c; }
+    ul { margin: 0; padding-left: 16px; }
+    li { margin-bottom: 2px; }
+    .empty-state { text-align: center; padding: 32px; color: #666; font-size: 14px; background: #fff; border-radius: 10px; }
+
+    /* Modal / Detail Panel */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.45);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      z-index: 999;
+    }
+    .modal-card {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 800px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 14px;
+      margin-bottom: 16px;
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 24px;
+      line-height: 1;
+      cursor: pointer;
+      color: #666;
+    }
+    .modal-close:hover { color: #000; }
+    
+    .comp-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .comp-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 10px 8px;
+      text-align: center;
+    }
+    .comp-card.low {
+      background: #fff5f5;
+      border: 2px solid #b00020;
+      color: #b00020;
+    }
+    .comp-card .comp-title { font-size: 11px; text-transform: uppercase; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+    .comp-card.low .comp-title { color: #b00020; }
+    .comp-card .comp-val { font-size: 18px; font-weight: 700; }
+    .comp-card .comp-tag { font-size: 11px; margin-top: 4px; font-weight: 600; }
+
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+    .detail-table th, .detail-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #eee;
+    }
+    .detail-table th { background: #f8fafc; font-size: 12px; }
+
+    /* Responsive Breakpoint: On screens < 900px, sidebar moves above main area */
+    @media (max-width: 900px) {
+      main.dashboard-layout {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        width: 100%;
+        position: static;
+        max-height: none;
+        overflow-y: visible;
+        padding-right: 0;
+      }
+      .charts-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Acadex · Performance Tracker</h2>
+    <div class="header-user" id="header-user">
+      <span class="user-pill" id="user-display">Loading...</span>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </header>
+
+  <!-- Two-Column Main Layout -->
+  <main class="dashboard-layout">
+    <!-- LEFT COLUMN: Sticky, independently scrolling sidebar with 5 accordion forms -->
+    <aside class="sidebar" id="dashboard-sidebar">
+      <!-- Accordion 1: Add Course Form -->
+      <div class="accordion-section" id="acc-section-course">
+        <button type="button" class="accordion-header" onclick="toggleAccordion('course')">
+          <span>➕ Add Course</span>
+          <span class="acc-icon" id="acc-icon-course">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-body-course">
+          <div id="course-success-msg" class="alert-success" style="display:none;"></div>
+          <div id="course-error-msg" class="alert-error" style="display:none;"></div>
+
+          <form id="form-add-course" onsubmit="submitAddCourse(event)" novalidate>
+            <div class="form-group">
+              <label for="form-course-code">Course Code</label>
+              <input type="text" id="form-course-code" placeholder="e.g. CSE 323" style="width:100%;" required>
+              <div class="field-error" id="form-course-code-error"></div>
+            </div>
+            <div class="form-group">
+              <label for="form-course-name">Course Name</label>
+              <input type="text" id="form-course-name" placeholder="e.g. Operating Systems" style="width:100%;" required>
+              <div class="field-error" id="form-course-name-error"></div>
+            </div>
+            <button type="submit" class="primary-btn" id="btn-course-submit" style="width:100%;margin-top:2px;">Create Course</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Accordion 2: Enroll Student Form -->
+      <div class="accordion-section" id="acc-section-enroll">
+        <button type="button" class="accordion-header" onclick="toggleAccordion('enroll')">
+          <span>🎓 Enroll Student</span>
+          <span class="acc-icon" id="acc-icon-enroll">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-body-enroll">
+          <div id="enroll-success-msg" class="alert-success" style="display:none;"></div>
+          <div id="enroll-error-msg" class="alert-error" style="display:none;"></div>
+
+          <form id="form-enroll-student" onsubmit="submitEnrollStudent(event)" novalidate>
+            <div class="form-group">
+              <label for="form-enroll-code">Student ID</label>
+              <input type="text" id="form-enroll-code" placeholder="e.g. 241-35-101" style="width:100%;" required>
+              <div class="field-error" id="form-enroll-code-error"></div>
+            </div>
+            <div class="form-group">
+              <label for="form-enroll-name">Student Name</label>
+              <input type="text" id="form-enroll-name" placeholder="e.g. Sadia Rahman" style="width:100%;" required>
+              <div class="field-error" id="form-enroll-name-error"></div>
+            </div>
+            <div class="form-group">
+              <label for="form-enroll-email">Student Email</label>
+              <input type="email" id="form-enroll-email" placeholder="e.g. sadia.101@diu.edu.bd" style="width:100%;" required>
+              <div class="field-error" id="form-enroll-email-error"></div>
+            </div>
+            <button type="submit" class="primary-btn" id="btn-enroll-submit" style="width:100%;margin-top:2px;">Enroll Student</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Accordion 3: Log Attendance Form -->
+      <div class="accordion-section" id="acc-section-att">
+        <button type="button" class="accordion-header" onclick="toggleAccordion('att')">
+          <span>📅 Log Attendance</span>
+          <span class="acc-icon" id="acc-icon-att">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-body-att">
+          <div id="att-success-msg" class="alert-success" style="display:none;"></div>
+          <div id="att-error-msg" class="alert-error" style="display:none;"></div>
+
+          <form id="form-attendance" onsubmit="submitAttendance(event)" novalidate>
+            <div class="form-group">
+              <label for="form-att-code">Student ID</label>
+              <input type="text" id="form-att-code" placeholder="e.g. 241-35-101" style="width:100%;" required>
+              <div class="field-error" id="form-att-code-error"></div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="form-att-status">Status</label>
+                <select id="form-att-status" style="width:100%;">
+                  <option value="1">Present (1)</option>
+                  <option value="0">Absent (0)</option>
+                </select>
+                <div class="field-error" id="form-att-status-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="form-att-date">Date</label>
+                <input type="date" id="form-att-date" style="width:100%;" required>
+                <div class="field-error" id="form-att-date-error"></div>
+              </div>
+            </div>
+            <button type="submit" class="primary-btn" id="btn-att-submit" style="width:100%;margin-top:2px;">Save Attendance</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Accordion 2: Record Assessment Mark Form -->
+      <div class="accordion-section" id="acc-section-mark">
+        <button type="button" class="accordion-header" onclick="toggleAccordion('mark')">
+          <span>📝 Record Mark</span>
+          <span class="acc-icon" id="acc-icon-mark">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-body-mark">
+          <div id="mark-success-msg" class="alert-success" style="display:none;"></div>
+          <div id="mark-error-msg" class="alert-error" style="display:none;"></div>
+
+          <form id="form-mark" onsubmit="submitMark(event)" novalidate>
+            <div class="form-group">
+              <label for="form-mark-code">Student ID</label>
+              <input type="text" id="form-mark-code" placeholder="e.g. 241-35-101" style="width:100%;" required>
+              <div class="field-error" id="form-mark-code-error"></div>
+            </div>
+            <div class="form-group">
+              <label for="form-mark-cat">Category</label>
+              <select id="form-mark-cat" style="width:100%;">
+                <option value="quiz">Quiz</option>
+                <option value="assignment">Assignment</option>
+                <option value="presentation">Presentation</option>
+                <option value="midterm">Midterm</option>
+                <option value="final">Final</option>
+              </select>
+              <div class="field-error" id="form-mark-cat-error"></div>
+            </div>
+            <div class="form-group">
+              <label for="form-mark-assessment">Assessment Name</label>
+              <input type="text" id="form-mark-assessment" placeholder="e.g. Quiz 3, Midterm..." style="width:100%;" required>
+              <div class="field-error" id="form-mark-assessment-error"></div>
+            </div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="form-mark-obtained">Obtained</label>
+                <input type="number" id="form-mark-obtained" step="0.1" placeholder="e.g. 8.5" style="width:100%;" required>
+                <div class="field-error" id="form-mark-obtained-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="form-mark-total">Total</label>
+                <input type="number" id="form-mark-total" step="0.1" placeholder="e.g. 10" style="width:100%;" required>
+                <div class="field-error" id="form-mark-total-error"></div>
+              </div>
+            </div>
+            <button type="submit" class="primary-btn" id="btn-mark-submit" style="width:100%;margin-top:2px;">Save Mark</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Accordion 3: Edit Assessment Plan Form -->
+      <div class="accordion-section" id="acc-section-plan">
+        <button type="button" class="accordion-header" onclick="toggleAccordion('plan')">
+          <span>⚙️ Edit Assessment Plan</span>
+          <span class="acc-icon" id="acc-icon-plan">▼</span>
+        </button>
+        <div class="accordion-body" id="acc-body-plan">
+          <div id="plan-success-msg" class="alert-success" style="display:none;"></div>
+          <div id="plan-error-msg" class="alert-error" style="display:none;"></div>
+
+          <form id="form-edit-plan" onsubmit="submitAssessmentPlan(event)" novalidate>
+            <div class="plan-inputs-grid">
+              <div class="form-group">
+                <label for="plan-in-quiz">Quiz Max</label>
+                <input type="number" id="plan-in-quiz" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-quiz-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-assignment">Assignment</label>
+                <input type="number" id="plan-in-assignment" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-assignment-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-midterm">Midterm Max</label>
+                <input type="number" id="plan-in-midterm" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-midterm-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-final">Final Max</label>
+                <input type="number" id="plan-in-final" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-final-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-presentation">Presentation</label>
+                <input type="number" id="plan-in-presentation" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-presentation-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-attendance">Attendance</label>
+                <input type="number" id="plan-in-attendance" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-attendance-error"></div>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <div id="plan-sum-preview" style="font-size:12px; font-weight:600; color:#475569;">
+                Sum: <span id="plan-preview-num">105</span> max
+              </div>
+            </div>
+
+            <button type="submit" class="primary-btn" id="btn-save-plan" style="width:100%;">Save Assessment Plan</button>
+          </form>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT COLUMN: Main Area (Course selector, thresholds, search, cards, charts, table) -->
+    <div class="main-content">
+      <!-- Global Error / Warning Banner -->
+      <div id="init-error-banner" class="alert-error" style="display:none; margin-bottom: 14px;"></div>
+
+      <!-- Filter Controls Bar -->
+      <div class="bar">
+        <div>
+          <label for="course">Course</label>
+          <select id="course"></select>
+        </div>
+        <div>
+          <label for="att">Min attendance %</label>
+          <input id="att" type="number" value="60" min="0" max="100">
+        </div>
+        <div>
+          <label for="mk">Min marks %</label>
+          <input id="mk" type="number" value="40" min="0" max="100">
+        </div>
+        <div style="padding-bottom: 8px;">
+          <label style="cursor:pointer; display: flex; align-items: center; gap: 6px;">
+            <input id="flag" type="checkbox"> Only flagged
+          </label>
+        </div>
+        <button class="primary-btn" onclick="load()">Check</button>
+      </div>
+
+      <!-- Student Search Box -->
+      <div class="search-bar">
+        <div style="flex:1;">
+          <input id="search-student-code" type="text" placeholder="Search by Student ID (e.g. 241-35-101)..." style="width:100%;" onkeydown="if(event.key==='Enter') searchStudent()">
+        </div>
+        <button class="primary-btn" onclick="searchStudent()">Search</button>
+      </div>
+      <div id="search-error" class="alert-error" style="display:none;"></div>
+
+      <!-- Metric Counters -->
+      <div class="cards">
+        <div class="card crit"><b id="c1">-</b>Critical</div>
+        <div class="card warn"><b id="c2">-</b>Warning</div>
+        <div class="card ok"><b id="c3">-</b>OK</div>
+      </div>
+
+      <!-- Assessment Plan Overview Card -->
+      <div class="assessment-plan-card" id="assessment-plan-card">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h4 style="margin:0; font-size:15px; color:#1d3a8a; display:flex; align-items:center; gap:6px;">
+              <span>📋</span> Course Assessment Plan
+            </h4>
+            <span id="plan-code-badge" style="background:#e0e7ff; color:#1d3a8a; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px;">SE 331</span>
+          </div>
+          <button type="button" onclick="focusEditPlan()" style="background:#f1f5f9; color:#1d3a8a; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+            ✏️ Edit in Sidebar
+          </button>
+        </div>
+
+        <!-- Plan Categories Overview Grid -->
+        <div class="plan-chip-grid" id="plan-items-grid">
+          <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Plan Total & Warning / Note banner -->
+        <div id="plan-total-banner" style="margin-top:12px;"></div>
+      </div>
+
+      <!-- Course Level Analytics Charts -->
+      <div class="charts-row">
+        <!-- 1) Doughnut Chart: Risk distribution -->
+        <div class="chart-box">
+          <div class="chart-title">
+            <span>Student Risk Distribution</span>
+            <span class="chart-hint">Based on course summary</span>
+          </div>
+          <div style="position:relative;flex:1;min-height:220px;max-height:240px;display:flex;justify-content:center;">
+            <canvas id="doughnutChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 4) Horizontal Bar Chart: Student ranking by percentage_so_far -->
+        <div class="chart-box">
+          <div class="chart-title">
+            <span>Overall Performance Ranking</span>
+            <span class="chart-hint">Percentage So Far (%) · Click bar to inspect</span>
+          </div>
+          <div class="ranking-scroll-container">
+            <div id="rankingChartWrapper" style="position:relative; width:100%;">
+              <canvas id="rankingChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Student Table with Assessment Plan Weights -->
+      <div id="table-container" class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="min-width: 140px;">Student</th>
+              <th>Quiz</th>
+              <th>Assignment</th>
+              <th>Mid</th>
+              <th>Presentation</th>
+              <th>Attendance</th>
+              <th>Final-Term</th>
+              <th>Total so far</th>
+              <th>Status</th>
+              <th style="min-width: 220px;">Why flagged</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+
+      <p style="font-size:12px;color:#666;margin:0">Flags are advisory only. Faculty make the final decision. Tip: Click any student row or ranking bar to view detailed performance breakdown.</p>
+    </div>
+  </main>
+
+  <!-- Student Detail Modal -->
+  <div id="detail-modal" class="modal-overlay" style="display:none;" onclick="if(event.target===this) closeDetail()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h3 id="det-name" style="margin:0 0 4px 0;color:#1d3a8a;"></h3>
+          <span id="det-code" style="color:#555;font-weight:600;font-size:14px;"></span>
+          <span id="det-badge" class="badge" style="margin-left:8px;"></span>
+          <span id="det-overall" style="margin-left:12px;font-size:13px;font-weight:600;color:#1d3a8a;"></span>
+        </div>
+        <button class="modal-close" onclick="closeDetail()">&times;</button>
+      </div>
+
+      <!-- Category Comparison Bar Chart -->
+      <h4 style="margin:8px 0 4px 0;color:#1d3a8a;font-size:14px;">Component Marks: Obtained vs. Max Marks</h4>
+      <div style="position:relative;height:210px;margin-bottom:8px;background:#f8fafc;padding:10px;border-radius:8px;border:1px solid #e2e8f0;">
+        <canvas id="studentDetailChart"></canvas>
+      </div>
+      <div style="font-size:12px;color:#475569;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:6px;padding:8px 12px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;">
+        <span>ℹ️ <strong>Final-Term pending:</strong> Excluded from warnings and score-so-far calculation.</span>
+        <span style="color:#b00020;font-weight:600;">⚠️ Red bars indicate components below threshold</span>
+      </div>
+
+      <!-- Categories with Low Highlight & Warning Text -->
+      <h4 style="margin:8px 0;color:#333;font-size:14px;">Component Standing</h4>
+      <div class="comp-grid" id="det-components"></div>
+
+      <!-- What-if Final-Term Helper -->
+      <div id="det-what-if" style="margin-bottom:14px;"></div>
+
+      <!-- Warning Reasons -->
+      <div id="det-warnings" style="margin-bottom:14px;"></div>
+
+      <!-- Individual Assessments Table -->
+      <h4 style="margin:14px 0 8px 0;color:#333;font-size:14px;">Recorded Assessment Marks</h4>
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Assessment Name</th>
+            <th>Obtained</th>
+            <th>Total</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody id="det-assessments"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Chart.js instance tracking
+    let doughnutChartInstance = null;
+    let rankingChartInstance = null;
+    let studentDetailChartInstance = null;
+    let currentAssessmentPlan = null;
+
+    function getToken() {
+      return localStorage.getItem("acadex_token");
+    }
+
+    function showInitError(msg) {
+      const banner = document.getElementById("init-error-banner");
+      if (banner) {
+        banner.textContent = msg;
+        banner.style.display = "block";
+      }
+    }
+
+    function hideInitError() {
+      const banner = document.getElementById("init-error-banner");
+      if (banner) {
+        banner.textContent = "";
+        banner.style.display = "none";
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem("acadex_token");
+      localStorage.removeItem("acadex_user");
+      window.location.href = "/login.html";
+    }
+
+    const token = getToken();
+    if (!token) {
+      window.location.href = "/login.html";
+    }
+
+    function authHeaders() {
+      return {
+        "Authorization": `Bearer ${getToken()}`,
+        "Content-Type": "application/json"
+      };
+    }
+
+    function closeDetail() {
+      document.getElementById("detail-modal").style.display = "none";
+    }
+
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Escape") closeDetail();
+    });
+
+    // Accordion Toggle Helper
+    function toggleAccordion(id, forceState) {
+      const body = document.getElementById(`acc-body-${id}`);
+      const icon = document.getElementById(`acc-icon-${id}`);
+      if (!body) return;
+      const isCurrentlyOpen = body.style.display !== "none";
+      const shouldOpen = forceState !== undefined ? forceState : !isCurrentlyOpen;
+      body.style.display = shouldOpen ? "block" : "none";
+      if (icon) {
+        icon.textContent = shouldOpen ? "▲" : "▼";
+      }
+    }
+
+    function focusEditPlan() {
+      toggleAccordion("plan", true);
+      const inp = document.getElementById("plan-in-quiz");
+      if (inp) {
+        inp.focus();
+        inp.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    function initAccordionState() {
+      const isMobile = window.innerWidth < 900;
+      const allSections = ["course", "enroll", "att", "mark", "plan"];
+      if (isMobile) {
+        allSections.forEach(s => toggleAccordion(s, false));
+      } else {
+        allSections.forEach(s => toggleAccordion(s, true));
+      }
+    }
+
+    // Initialize today's date for attendance form
+    const todayStr = new Date().toISOString().split("T")[0];
+    document.getElementById("form-att-date").value = todayStr;
+    document.getElementById("form-att-date").max = todayStr;
+
+    // Attach course dropdown change listener
+    document.getElementById("course").addEventListener("change", () => {
+      load();
+    });
+
+    async function init() {
+      hideInitError();
+      initAccordionState();
+
+      // Step 1: Fetch current authenticated user
+      try {
+        const userRes = await fetch("/api/auth/me", { headers: authHeaders() });
+        if (userRes.status === 401) {
+          logout();
+          return;
+        }
+        if (!userRes.ok) {
+          throw new Error(`Profile fetch failed (${userRes.status})`);
+        }
+        const user = await userRes.json();
+        document.getElementById("user-display").textContent = `${user.name} (${user.email})`;
+      } catch (e) {
+        console.error("Failed to load user:", e);
+        document.getElementById("user-display").textContent = "Faculty Portal";
+        showInitError("Unable to verify faculty profile. Please log in again.");
+      }
+
+      // Step 2: Fetch courses
+      let cs = [];
+      try {
+        const coursesRes = await fetch("/api/courses", { headers: authHeaders() });
+        if (coursesRes.status === 401) {
+          logout();
+          return;
+        }
+        if (!coursesRes.ok) {
+          throw new Error(`Courses fetch failed (${coursesRes.status})`);
+        }
+        cs = await coursesRes.json();
+      } catch (e) {
+        console.error("Failed to load courses:", e);
+        showInitError("Unable to load course list. Please refresh the page.");
+        const rowsEl = document.getElementById("rows");
+        if (rowsEl) {
+          rowsEl.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;color:#b00020;">Failed to load courses. Please refresh.</td></tr>`;
+        }
+        return;
+      }
+
+      const courseSelect = document.getElementById("course");
+      if (!Array.isArray(cs) || cs.length === 0) {
+        courseSelect.innerHTML = `<option value="">No courses assigned</option>`;
+        document.getElementById("table-container").innerHTML = `<div class="empty-state">No courses are currently assigned to your faculty account.</div>`;
+        document.getElementById("c1").textContent = "0";
+        document.getElementById("c2").textContent = "0";
+        document.getElementById("c3").textContent = "0";
+        return;
+      }
+
+      // Populate dropdown and ensure the first course is selected
+      courseSelect.innerHTML = cs.map(c => `<option value="${c.id}">${c.code} - ${c.name}</option>`).join("");
+      courseSelect.value = cs[0].id;
+
+      // Step 3: Load summary, table, assessment plan card, and charts for selected course
+      try {
+        await load();
+      } catch (e) {
+        console.error("Failed to load course details:", e);
+        showInitError("Unable to load performance data for the selected course.");
+      }
+    }
+
+    // --- Assessment Plan Loader and UI ---
+    async function loadAssessmentPlan() {
+      const courseId = document.getElementById("course").value;
+      if (!courseId) return;
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/assessment-plan`, {
+          headers: authHeaders()
+        });
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        if (!res.ok) return;
+
+        const data = await res.json();
+        currentAssessmentPlan = data;
+        renderAssessmentPlanCard(data);
+      } catch (err) {
+        console.error("Failed to load assessment plan:", err);
+      }
+    }
+
+    function renderAssessmentPlanCard(data) {
+      document.getElementById("plan-code-badge").textContent = data.course_code || "Plan";
+
+      const catDisplayNames = {
+        quiz: "Quiz",
+        assignment: "Assignment",
+        midterm: "Midterm",
+        final: "Final-Term",
+        presentation: "Presentation",
+        attendance: "Attendance"
+      };
+
+      const order = ["quiz", "assignment", "midterm", "final", "presentation", "attendance"];
+      const itemMap = {};
+      (data.items || []).forEach(item => {
+        itemMap[item.category.toLowerCase()] = item.max_marks;
+      });
+
+      const gridEl = document.getElementById("plan-items-grid");
+      gridEl.innerHTML = order.map(cat => {
+        const mx = itemMap[cat] !== undefined ? itemMap[cat] : "-";
+        return `
+          <div class="plan-chip">
+            <div class="plan-chip-title">${catDisplayNames[cat]}</div>
+            <div class="plan-chip-val">${mx}</div>
+            <div class="plan-chip-sub">max marks</div>
+          </div>
+        `;
+      }).join("");
+
+      // Total Banner (flag if != 100)
+      const bannerEl = document.getElementById("plan-total-banner");
+      const total = data.total_max_marks;
+      if (total !== 100) {
+        bannerEl.innerHTML = `
+          <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:10px 14px; font-size:13px; color:#92400e; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="font-size:16px;">⚠️</span>
+              <span>Total Plan Weight: <strong>${total} marks</strong>. <em>(Note: Plan does not sum to 100; standing scales to assessed weight so far).</em></span>
+            </div>
+            <span style="background:#fef3c7; color:#b45309; font-weight:700; padding:2px 8px; border-radius:99px; font-size:11px;">FLAGGED: != 100</span>
+          </div>
+        `;
+      } else {
+        bannerEl.innerHTML = `
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px 14px; font-size:13px; color:#15803d; display:flex; align-items:center; gap:8px;">
+            <span>✓ Total Plan Weight: <strong>100 marks</strong>. Plan correctly sums to 100.</span>
+          </div>
+        `;
+      }
+
+      // Pre-fill Edit Plan Form inputs in Sidebar
+      order.forEach(cat => {
+        const inp = document.getElementById(`plan-in-${cat}`);
+        if (inp && itemMap[cat] !== undefined) {
+          inp.value = itemMap[cat];
+        }
+      });
+      updatePlanSumPreview();
+    }
+
+    function updatePlanSumPreview() {
+      const cats = ["quiz", "assignment", "midterm", "final", "presentation", "attendance"];
+      let sum = 0;
+      for (const c of cats) {
+        const inp = document.getElementById(`plan-in-${c}`);
+        const v = inp ? parseFloat(inp.value) : 0;
+        if (!isNaN(v) && v >= 0) {
+          sum += v;
+        }
+      }
+      sum = Math.round(sum * 10) / 10;
+      const previewNum = document.getElementById("plan-preview-num");
+      if (previewNum) {
+        previewNum.textContent = sum;
+        if (sum !== 100) {
+          previewNum.style.color = "#b45309";
+        } else {
+          previewNum.style.color = "#15803d";
+        }
+      }
+    }
+
+    function clearPlanErrors() {
+      document.getElementById("plan-success-msg").style.display = "none";
+      document.getElementById("plan-error-msg").style.display = "none";
+      const cats = ["quiz", "assignment", "midterm", "final", "presentation", "attendance"];
+      cats.forEach(c => {
+        const errEl = document.getElementById(`plan-${c}-error`);
+        if (errEl) errEl.textContent = "";
+        const inp = document.getElementById(`plan-in-${c}`);
+        if (inp) inp.classList.remove("invalid");
+      });
+    }
+
+    // Submit Edit Assessment Plan Form in Sidebar
+    async function submitAssessmentPlan(e) {
+      e.preventDefault();
+      clearPlanErrors();
+
+      const courseId = document.getElementById("course").value;
+      const cats = ["quiz", "assignment", "midterm", "final", "presentation", "attendance"];
+      const payload = [];
+      let clientError = false;
+
+      for (const cat of cats) {
+        const inp = document.getElementById(`plan-in-${cat}`);
+        const errEl = document.getElementById(`plan-${cat}-error`);
+        const valStr = inp.value.trim();
+
+        if (valStr === "" || isNaN(parseFloat(valStr))) {
+          errEl.textContent = "Required";
+          inp.classList.add("invalid");
+          clientError = true;
+          continue;
+        }
+
+        const val = parseFloat(valStr);
+        if (val < 0) {
+          errEl.textContent = "Cannot be negative";
+          inp.classList.add("invalid");
+          clientError = true;
+          continue;
+        }
+
+        payload.push({ category: cat, max_marks: val });
+      }
+
+      if (clientError) return;
+
+      const btn = document.getElementById("btn-save-plan");
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/assessment-plan`, {
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 422 && Array.isArray(data.detail)) {
+            data.detail.forEach(err => {
+              const msg = err.msg.replace(/^Value error,\s*/i, '');
+              const errBox = document.getElementById("plan-error-msg");
+              errBox.textContent = msg;
+              errBox.style.display = "block";
+            });
+          } else {
+            const errBox = document.getElementById("plan-error-msg");
+            errBox.textContent = data.detail || "Failed to update assessment plan.";
+            errBox.style.display = "block";
+          }
+          return;
+        }
+
+        // Success
+        const sBox = document.getElementById("plan-success-msg");
+        sBox.textContent = "Assessment plan updated successfully!";
+        sBox.style.display = "block";
+
+        // Refresh plan card display
+        await loadAssessmentPlan();
+
+        // Refresh table, summary, and charts immediately!
+        await load();
+
+        setTimeout(() => {
+          sBox.style.display = "none";
+        }, 3000);
+
+      } catch (err) {
+        const errBox = document.getElementById("plan-error-msg");
+        errBox.textContent = "Network error while saving assessment plan.";
+        errBox.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Save Assessment Plan";
+      }
+    }
+
+    // Helper for table category cells
+    function formatCell(comp) {
+      if (!comp || comp.status === "pending") {
+        return `<span class="badge-pending">Pending</span>`;
+      }
+      const isLow = comp.status === "low";
+      const ob = comp.obtained_marks !== undefined ? comp.obtained_marks : "-";
+      const mx = comp.max_marks !== undefined ? comp.max_marks : "-";
+      const pct = comp.percentage !== null && comp.percentage !== undefined ? `${comp.percentage}%` : "";
+      
+      if (isLow) {
+        return `<span class="cell-low">${ob}/${mx} <small style="font-weight:normal">(${pct})</small></span>`;
+      }
+      return `<span class="cell-ok">${ob}/${mx} <small style="color:#64748b;font-weight:normal">(${pct})</small></span>`;
+    }
+
+    async function load() {
+      const courseId = document.getElementById("course").value;
+      if (!courseId) return;
+
+      const attVal = parseFloat(document.getElementById("att").value) || 60;
+      const mkVal = parseFloat(document.getElementById("mk").value) || 40;
+      const flagVal = document.getElementById("flag").checked;
+
+      // Ensure plan card is loaded
+      await loadAssessmentPlan();
+
+      const q = `attendance_threshold=${encodeURIComponent(attVal)}&marks_threshold=${encodeURIComponent(mkVal)}&only_flagged=${flagVal}`;
+      
+      try {
+        const res = await fetch(`/api/courses/${courseId}/performance-warnings?${q}`, {
+          headers: authHeaders()
+        });
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        if (!res.ok) {
+          showInitError(`Error loading performance warnings (${res.status})`);
+          return;
+        }
+        const d = await res.json();
+        
+        // 1. Update Cards
+        if (d.summary) {
+          document.getElementById("c1").textContent = d.summary.critical;
+          document.getElementById("c2").textContent = d.summary.warning;
+          document.getElementById("c3").textContent = d.summary.ok;
+        } else {
+          const n = l => d.students.filter(s => s.level === l).length;
+          document.getElementById("c1").textContent = n("critical");
+          document.getElementById("c2").textContent = n("warning");
+          document.getElementById("c3").textContent = n("ok");
+        }
+
+        // 2. Render Course Level Charts (Doughnut & Ranking Bar)
+        renderCourseCharts(d, mkVal);
+
+        // 3. Render Students Table
+        const rowsEl = document.getElementById("rows");
+        const totalEnrolled = d.summary ? d.summary.total : (d.all_students ? d.all_students.length : d.students.length);
+        if (totalEnrolled === 0) {
+          rowsEl.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:36px 16px;color:#64748b;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">👥</div><strong>No students enrolled yet</strong><div style="font-size:12px;color:#94a3b8;margin-top:4px;">Use the "Enroll Student" form in the left sidebar to add students to this course.</div></td></tr>`;
+          return;
+        }
+
+        if (d.students.length === 0) {
+          rowsEl.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;color:#888;">No students match criteria.</td></tr>`;
+          return;
+        }
+
+        rowsEl.innerHTML = d.students.map(s => {
+          const c = s.components || {};
+          const qCell = formatCell(c.quiz);
+          const aCell = formatCell(c.assignment);
+          const mCell = formatCell(c.midterm);
+          const pCell = formatCell(c.presentation);
+          const attCell = formatCell(c.attendance);
+          const fCell = formatCell(c.final);
+
+          const totalSoFar = `<strong>${s.total_obtained} / ${s.total_assessed_max}</strong> <div style="font-size:11px;color:#64748b;font-weight:600;">${s.percentage_so_far}%</div>`;
+
+          return `
+            <tr class="clickable-row" onclick="openStudentDetail('${s.student_code}')" title="Click to view full detail for ${s.name}">
+              <td><strong>${s.name}</strong><br><small style="color:#64748b">${s.student_code}</small></td>
+              <td>${qCell}</td>
+              <td>${aCell}</td>
+              <td>${mCell}</td>
+              <td>${pCell}</td>
+              <td>${attCell}</td>
+              <td>${fCell}</td>
+              <td>${totalSoFar}</td>
+              <td><span class="badge ${s.level}">${s.level.toUpperCase()}</span></td>
+              <td><ul style="margin:0;padding-left:14px;font-size:12px;">${s.reasons.length ? s.reasons.map(r => `<li>${r}</li>`).join('') : '<li style="color:#2e7d32">No warning factors</li>'}</ul></td>
+            </tr>
+          `;
+        }).join("");
+      } catch (e) {
+        console.error("Failed to load warning data:", e);
+      }
+    }
+
+    // Course Level Charts
+    function renderCourseCharts(d, marksThreshold) {
+      // 1) Doughnut Chart
+      if (doughnutChartInstance) {
+        doughnutChartInstance.destroy();
+      }
+      const totalCount = d.summary ? d.summary.total : 0;
+      const doughnutCtx = document.getElementById("doughnutChart").getContext("2d");
+
+      if (totalCount === 0) {
+        doughnutChartInstance = new Chart(doughnutCtx, {
+          type: "doughnut",
+          data: {
+            labels: ["No students enrolled"],
+            datasets: [{
+              data: [1],
+              backgroundColor: ["#e2e8f0"],
+              borderWidth: 1,
+              borderColor: "#cbd5e1"
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { boxWidth: 12, padding: 10, font: { size: 12 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: () => " No students enrolled yet"
+                }
+              }
+            }
+          }
+        });
+      } else {
+        doughnutChartInstance = new Chart(doughnutCtx, {
+          type: "doughnut",
+          data: {
+            labels: ["Critical", "Warning", "OK"],
+            datasets: [{
+              data: [d.summary.critical, d.summary.warning, d.summary.ok],
+              backgroundColor: ["#b00020", "#d97706", "#16a34a"],
+              hoverBackgroundColor: ["#900018", "#b45309", "#15803d"],
+              borderWidth: 2,
+              borderColor: "#fff"
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { boxWidth: 12, padding: 10, font: { size: 12 } }
+              },
+              tooltip: {
+                callbacks: {
+                  label: (ctx) => ` ${ctx.label}: ${ctx.raw} student${ctx.raw === 1 ? '' : 's'}`
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // 2) Horizontal Bar Chart Ranking All Students
+      if (rankingChartInstance) {
+        rankingChartInstance.destroy();
+      }
+      const allStudents = (d.all_students || d.students || []).slice();
+      allStudents.sort((a, b) => (b.percentage_so_far ?? b.overall_score ?? 0) - (a.percentage_so_far ?? a.overall_score ?? 0));
+
+      const totalStudents = allStudents.length;
+      const wrapper = document.getElementById("rankingChartWrapper");
+      const chartHeight = Math.max(260, totalStudents * 28);
+      wrapper.style.height = `${chartHeight}px`;
+
+      const rankingCtx = document.getElementById("rankingChart").getContext("2d");
+
+      if (totalStudents === 0) {
+        rankingChartInstance = new Chart(rankingCtx, {
+          type: "bar",
+          data: {
+            labels: ["No students enrolled"],
+            datasets: [{
+              label: "Score",
+              data: [0],
+              backgroundColor: ["#e2e8f0"]
+            }]
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: { min: 0, max: 100, ticks: { callback: v => v + '%' }, grid: { color: "#f1f5f9" } },
+              y: { grid: { display: false } }
+            },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: () => " No students enrolled yet"
+                }
+              }
+            }
+          }
+        });
+        return;
+      }
+
+      const labels = allStudents.map((s, idx) => {
+        if (totalStudents >= 3 && idx < 3) return `${s.name} [Top performer]`;
+        if (totalStudents >= 3 && idx >= totalStudents - 3) return `${s.name} [Needs attention]`;
+        return s.name;
+      });
+
+      const scores = allStudents.map(s => s.percentage_so_far ?? s.overall_score ?? 0);
+
+      // Color bars: red below threshold, amber near it, green for good
+      const barColors = scores.map(score => {
+        if (score < marksThreshold) return "#ef4444";
+        if (score < marksThreshold + 15) return "#f59e0b";
+        return "#22c55e";
+      });
+
+      rankingChartInstance = new Chart(rankingCtx, {
+        type: "bar",
+        data: {
+          labels: labels,
+          datasets: [{
+            label: "Score So Far (%)",
+            data: scores,
+            backgroundColor: barColors,
+            borderRadius: 4,
+            maxBarThickness: 18
+          }]
+        },
+        options: {
+          indexAxis: "y",
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              min: 0,
+              max: 100,
+              ticks: { callback: v => v + '%' },
+              grid: { color: "#f1f5f9" }
+            },
+            y: {
+              ticks: { font: { size: 11 }, autoSkip: false },
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const s = allStudents[ctx.dataIndex];
+                  const ob = s.total_obtained !== undefined ? s.total_obtained : "-";
+                  const mx = s.total_assessed_max !== undefined ? s.total_assessed_max : "-";
+                  return ` Score So Far: ${ctx.raw}% (${ob} / ${mx} assessed marks)`;
+                }
+              }
+            }
+          },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const idx = elements[0].index;
+              const student = allStudents[idx];
+              if (student && student.student_code) {
+                openStudentDetail(student.student_code);
+              }
+            }
+          },
+          onHover: (event, chartElement) => {
+            event.native.target.style.cursor = chartElement[0] ? "pointer" : "default";
+          }
+        }
+      });
+    }
+
+    async function searchStudent() {
+      const codeInput = document.getElementById("search-student-code");
+      const code = codeInput.value.trim();
+      const errEl = document.getElementById("search-error");
+      errEl.style.display = "none";
+      errEl.textContent = "";
+
+      if (!code) {
+        errEl.textContent = "Please enter a student ID to search.";
+        errEl.style.display = "block";
+        return;
+      }
+      openStudentDetail(code);
+    }
+
+    async function openStudentDetail(studentCode) {
+      const courseId = document.getElementById("course").value;
+      const attVal = document.getElementById("att").value;
+      const mkVal = document.getElementById("mk").value;
+      const errEl = document.getElementById("search-error");
+      errEl.style.display = "none";
+      errEl.textContent = "";
+
+      const q = `attendance_threshold=${encodeURIComponent(attVal)}&marks_threshold=${encodeURIComponent(mkVal)}`;
+      try {
+        const res = await fetch(`/api/courses/${courseId}/students/${encodeURIComponent(studentCode)}/performance?${q}`, {
+          headers: authHeaders()
+        });
+
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+
+        if (res.status === 404) {
+          const data = await res.json();
+          errEl.textContent = data.detail || `Student ID '${studentCode}' not found in this course.`;
+          errEl.style.display = "block";
+          return;
+        }
+
+        if (!res.ok) {
+          errEl.textContent = `Error fetching student performance (${res.status}).`;
+          errEl.style.display = "block";
+          return;
+        }
+
+        const data = await res.json();
+        renderDetailModal(data, parseFloat(mkVal) || 40);
+      } catch (err) {
+        errEl.textContent = "Network error while looking up student ID.";
+        errEl.style.display = "block";
+      }
+    }
+
+    function renderDetailModal(d, marksThreshold) {
+      document.getElementById("det-name").textContent = d.name;
+      document.getElementById("det-code").textContent = `ID: ${d.code}`;
+      
+      const overallText = d.percentage_so_far !== undefined 
+        ? `Score so far: ${d.total_obtained}/${d.total_assessed_max} (${d.percentage_so_far}%) · Plan Total: ${d.total_plan_max} max`
+        : (d.overall_score !== null ? `Overall Score: ${d.overall_score}%` : '');
+      document.getElementById("det-overall").textContent = overallText;
+      
+      const badgeEl = document.getElementById("det-badge");
+      badgeEl.className = `badge ${d.level}`;
+      badgeEl.textContent = d.level.toUpperCase();
+
+      // Bar chart per category comparing obtained marks vs max marks
+      renderStudentDetailChart(d, marksThreshold);
+
+      // What-if Final-Term Helper
+      renderWhatIf(d.what_if);
+
+      const compEl = document.getElementById("det-components");
+      const compKeys = [
+        { key: "attendance", label: "Attendance" },
+        { key: "quiz", label: "Quiz Avg" },
+        { key: "assignment", label: "Assignment" },
+        { key: "presentation", label: "Presentation" },
+        { key: "midterm", label: "Midterm" },
+        { key: "final", label: "Final Exam" }
+      ];
+
+      compEl.innerHTML = compKeys.map(c => {
+        const item = d.components[c.key] || { obtained_marks: 0, max_marks: 0, percentage: null, status: "pending" };
+        const isPending = item.status === "pending";
+        const isLow = item.status === "low";
+        
+        let valText = "-";
+        let tag = `<div class="comp-tag" style="color:#64748b">⏳ Pending</div>`;
+        let cardClass = "comp-card";
+
+        if (isPending) {
+          valText = `- / ${item.max_marks}`;
+        } else {
+          valText = `${item.obtained_marks} / ${item.max_marks}`;
+          const pctSub = `<small style="font-size:12px;font-weight:normal"> (${item.percentage}%)</small>`;
+          valText += pctSub;
+          if (isLow) {
+            cardClass += " low";
+            tag = `<div class="comp-tag">⚠️ Below Threshold</div>`;
+          } else {
+            tag = `<div class="comp-tag" style="color:#2e7d32">✓ Normal</div>`;
+          }
+        }
+
+        return `
+          <div class="${cardClass}">
+            <div class="comp-title">${c.label}</div>
+            <div class="comp-val" style="font-size:16px;">${valText}</div>
+            ${tag}
+          </div>
+        `;
+      }).join("");
+
+      const warnEl = document.getElementById("det-warnings");
+      if (d.reasons && d.reasons.length > 0) {
+        warnEl.innerHTML = `
+          <div style="background:#fff5f5;border-left:4px solid #b00020;padding:10px 14px;border-radius:4px;font-size:13px;color:#b00020;">
+            <strong>Warning Alerts:</strong>
+            <ul style="margin:4px 0 0 0;padding-left:18px;">
+              ${d.reasons.map(r => `<li>${r}</li>`).join('')}
+            </ul>
+          </div>
+        `;
+      } else {
+        warnEl.innerHTML = `
+          <div style="background:#f0fdf4;border-left:4px solid #16a34a;padding:8px 12px;border-radius:4px;font-size:13px;color:#15803d;">
+            ✓ All assessed performance components are at or above required threshold.
+          </div>
+        `;
+      }
+
+      const assessEl = document.getElementById("det-assessments");
+      if (!d.assessments || d.assessments.length === 0) {
+        assessEl.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:12px;color:#888;">No assessments recorded.</td></tr>`;
+      } else {
+        assessEl.innerHTML = d.assessments.map(a => {
+          const isLow = a.percentage < marksThreshold;
+          return `
+            <tr style="${isLow ? 'background:#fff8f8;' : ''}">
+              <td style="text-transform:capitalize;font-weight:600;color:#555;">${a.category}</td>
+              <td><strong>${a.name}</strong></td>
+              <td>${a.obtained} / ${a.total}</td>
+              <td style="${isLow ? 'color:#b00020;font-weight:700;' : 'font-weight:600;'}">
+                ${a.percentage}% ${isLow ? '⚠️' : ''}
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      document.getElementById("detail-modal").style.display = "flex";
+    }
+
+    function renderWhatIf(whatIf) {
+      const el = document.getElementById("det-what-if");
+      if (!whatIf) {
+        el.innerHTML = "";
+        return;
+      }
+
+      const isSafe = whatIf.status === "Already safe" || whatIf.result === "Already safe";
+      const isUnreachable = whatIf.status === "Not reachable" || whatIf.result === "Not reachable";
+
+      let badgeHtml = "";
+      let cardBg = "#eff6ff";
+      let cardBorder = "#bfdbfe";
+      let titleColor = "#1e40af";
+
+      if (isSafe) {
+        cardBg = "#f0fdf4";
+        cardBorder = "#86efac";
+        titleColor = "#15803d";
+        badgeHtml = `<span style="background:#dcfce7; color:#15803d; font-weight:700; padding:4px 10px; border-radius:99px; font-size:12px; display:inline-flex; align-items:center; gap:4px;">✓ Already safe</span>`;
+      } else if (isUnreachable) {
+        cardBg = "#fff5f5";
+        cardBorder = "#fca5a5";
+        titleColor = "#b00020";
+        badgeHtml = `<span style="background:#fee2e2; color:#b00020; font-weight:700; padding:4px 10px; border-radius:99px; font-size:12px; display:inline-flex; align-items:center; gap:4px;">✕ Not reachable</span>`;
+      } else {
+        badgeHtml = `<span style="background:#dbeafe; color:#1e40af; font-weight:700; padding:4px 10px; border-radius:99px; font-size:12px; display:inline-flex; align-items:center; gap:4px;">🎯 Needs ${whatIf.min_final_marks_needed} / ${whatIf.final_max_marks} (${whatIf.min_final_percentage_needed}%)</span>`;
+      }
+
+      el.innerHTML = `
+        <div style="background:${cardBg}; border:1px solid ${cardBorder}; border-radius:10px; padding:14px 16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h4 style="margin:0; font-size:14px; color:${titleColor}; display:flex; align-items:center; gap:6px;">
+                <span>🔮</span> What-if Helper: Final-Term Target
+              </h4>
+              ${badgeHtml}
+            </div>
+            <span style="background:rgba(0,0,0,0.06); color:#475569; font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px; text-transform:uppercase; letter-spacing:0.4px;">
+              ${whatIf.advisory_label || 'Estimate only · Advisory only'}
+            </span>
+          </div>
+          <p style="margin:0 0 6px 0; font-size:13px; color:#334155; line-height:1.4;">
+            ${whatIf.message}
+          </p>
+          <div style="font-size:11px; color:#64748b; border-top:1px dashed rgba(0,0,0,0.12); padding-top:6px; margin-top:6px;">
+            Target: 40% of total course plan (${whatIf.target_marks} / ${whatIf.total_plan_max} max marks). Calculation performed deterministically in Python. Advisory projection only.
+          </div>
+        </div>
+      `;
+    }
+
+    // Student Detail: Bar chart per category comparing obtained marks vs max marks
+    function renderStudentDetailChart(d, marksThreshold) {
+      if (studentDetailChartInstance) {
+        studentDetailChartInstance.destroy();
+      }
+
+      const catLabels = ["Attendance", "Quiz", "Assignment", "Presentation", "Midterm", "Final-Term"];
+      const catKeys = ["attendance", "quiz", "assignment", "presentation", "midterm", "final"];
+
+      // Obtained values (0 if pending)
+      const obtainedValues = catKeys.map(k => {
+        const comp = d.components[k];
+        if (!comp || comp.status === "pending") return 0;
+        return comp.obtained_marks !== undefined ? comp.obtained_marks : 0;
+      });
+
+      // Max marks values from plan
+      const maxValues = catKeys.map(k => {
+        const comp = d.components[k];
+        return comp ? comp.max_marks : 0;
+      });
+
+      // Colors: highlight low categories in red
+      const obtainedColors = catKeys.map(k => {
+        const comp = d.components[k];
+        if (!comp || comp.status === "pending") return "#cbd5e1"; // grey pending
+        if (comp.status === "low") return "#ef4444"; // red for low
+        return "#1d3a8a"; // deep blue for ok
+      });
+
+      const obtainedBorders = catKeys.map(k => {
+        const comp = d.components[k];
+        if (!comp || comp.status === "pending") return "#94a3b8";
+        if (comp.status === "low") return "#b00020";
+        return "#162d6b";
+      });
+
+      const detailCtx = document.getElementById("studentDetailChart").getContext("2d");
+      studentDetailChartInstance = new Chart(detailCtx, {
+        type: "bar",
+        data: {
+          labels: catLabels,
+          datasets: [
+            {
+              label: "Obtained Marks",
+              data: obtainedValues,
+              backgroundColor: obtainedColors,
+              borderColor: obtainedBorders,
+              borderWidth: 1.5,
+              borderRadius: 4,
+              maxBarThickness: 32
+            },
+            {
+              label: "Max Marks (Plan)",
+              data: maxValues,
+              backgroundColor: "#e2e8f0",
+              borderColor: "#94a3b8",
+              borderWidth: 1.5,
+              borderRadius: 4,
+              maxBarThickness: 32
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: "Marks" },
+              grid: { color: "#e2e8f0" }
+            },
+            x: {
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: {
+              position: "top",
+              labels: { boxWidth: 12, font: { size: 12 } }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const k = catKeys[ctx.dataIndex];
+                  const comp = d.components[k];
+                  if (ctx.datasetIndex === 0) {
+                    if (!comp || comp.status === "pending") return " Obtained: Pending (No marks yet)";
+                    const flag = comp.status === 'low' ? ' ⚠️ Below Threshold' : '';
+                    return ` Obtained: ${ctx.raw} / ${comp.max_marks} (${comp.percentage}%)${flag}`;
+                  } else {
+                    return ` Max Marks (Plan): ${ctx.raw}`;
+                  }
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // --- Sidebar Course Creation Handler ---
+    function clearCourseErrors() {
+      document.getElementById("course-success-msg").style.display = "none";
+      document.getElementById("course-error-msg").style.display = "none";
+      document.getElementById("form-course-code-error").textContent = "";
+      document.getElementById("form-course-name-error").textContent = "";
+      document.getElementById("form-course-code").classList.remove("invalid");
+      document.getElementById("form-course-name").classList.remove("invalid");
+    }
+
+    async function submitAddCourse(e) {
+      e.preventDefault();
+      clearCourseErrors();
+
+      const code = document.getElementById("form-course-code").value.trim();
+      const name = document.getElementById("form-course-name").value.trim();
+
+      let hasErr = false;
+      if (!code) {
+        document.getElementById("form-course-code-error").textContent = "Course code is required.";
+        document.getElementById("form-course-code").classList.add("invalid");
+        hasErr = true;
+      }
+      if (!name) {
+        document.getElementById("form-course-name-error").textContent = "Course name is required.";
+        document.getElementById("form-course-name").classList.add("invalid");
+        hasErr = true;
+      }
+      if (hasErr) return;
+
+      const btn = document.getElementById("btn-course-submit");
+      btn.disabled = true;
+      btn.textContent = "Creating...";
+
+      try {
+        const res = await fetch("/api/courses", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ code: code, name: name })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 422 && Array.isArray(data.detail)) {
+            data.detail.forEach(err => {
+              const field = err.loc[err.loc.length - 1];
+              const msg = err.msg.replace(/^Value error,\s*/i, '');
+              if (field === "code") {
+                document.getElementById("form-course-code-error").textContent = msg;
+                document.getElementById("form-course-code").classList.add("invalid");
+              } else if (field === "name") {
+                document.getElementById("form-course-name-error").textContent = msg;
+                document.getElementById("form-course-name").classList.add("invalid");
+              } else {
+                const errBox = document.getElementById("course-error-msg");
+                errBox.textContent = msg;
+                errBox.style.display = "block";
+              }
+            });
+          } else {
+            const errBox = document.getElementById("course-error-msg");
+            errBox.textContent = data.detail || "Failed to create course.";
+            errBox.style.display = "block";
+          }
+          return;
+        }
+
+        // Success:
+        const sBox = document.getElementById("course-success-msg");
+        sBox.textContent = `Course ${data.code} created successfully!`;
+        sBox.style.display = "block";
+
+        document.getElementById("form-course-code").value = "";
+        document.getElementById("form-course-name").value = "";
+
+        // Add to dropdown and select it automatically
+        const courseSelect = document.getElementById("course");
+        if (courseSelect.options.length === 1 && courseSelect.options[0].value === "") {
+          courseSelect.innerHTML = "";
+        }
+        const opt = document.createElement("option");
+        opt.value = data.id;
+        opt.textContent = `${data.code} - ${data.name}`;
+        courseSelect.appendChild(opt);
+        courseSelect.value = data.id;
+
+        // Trigger load to refresh dashboard with new course
+        await load();
+
+        setTimeout(() => {
+          sBox.style.display = "none";
+        }, 3500);
+      } catch (err) {
+        const errBox = document.getElementById("course-error-msg");
+        errBox.textContent = "Network error while creating course.";
+        errBox.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Create Course";
+      }
+    }
+
+    // --- Sidebar Student Enrollment Handler ---
+    function clearEnrollErrors() {
+      document.getElementById("enroll-success-msg").style.display = "none";
+      document.getElementById("enroll-error-msg").style.display = "none";
+      document.getElementById("form-enroll-code-error").textContent = "";
+      document.getElementById("form-enroll-name-error").textContent = "";
+      document.getElementById("form-enroll-email-error").textContent = "";
+      document.getElementById("form-enroll-code").classList.remove("invalid");
+      document.getElementById("form-enroll-name").classList.remove("invalid");
+      document.getElementById("form-enroll-email").classList.remove("invalid");
+    }
+
+    async function submitEnrollStudent(e) {
+      e.preventDefault();
+      clearEnrollErrors();
+
+      const courseId = document.getElementById("course").value;
+      if (!courseId) {
+        const errBox = document.getElementById("enroll-error-msg");
+        errBox.textContent = "Please select a course first.";
+        errBox.style.display = "block";
+        return;
+      }
+
+      const code = document.getElementById("form-enroll-code").value.trim();
+      const name = document.getElementById("form-enroll-name").value.trim();
+      const email = document.getElementById("form-enroll-email").value.trim();
+
+      let hasErr = false;
+      if (!code) {
+        document.getElementById("form-enroll-code-error").textContent = "Student ID is required.";
+        document.getElementById("form-enroll-code").classList.add("invalid");
+        hasErr = true;
+      } else if (!/^\d{3}-\d{2}-\d{3}$/.test(code)) {
+        document.getElementById("form-enroll-code-error").textContent = "Format must be like 241-35-101.";
+        document.getElementById("form-enroll-code").classList.add("invalid");
+        hasErr = true;
+      }
+
+      if (!name) {
+        document.getElementById("form-enroll-name-error").textContent = "Student name is required.";
+        document.getElementById("form-enroll-name").classList.add("invalid");
+        hasErr = true;
+      }
+      if (!email) {
+        document.getElementById("form-enroll-email-error").textContent = "Email is required.";
+        document.getElementById("form-enroll-email").classList.add("invalid");
+        hasErr = true;
+      }
+      if (hasErr) return;
+
+      const btn = document.getElementById("btn-enroll-submit");
+      btn.disabled = true;
+      btn.textContent = "Enrolling...";
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/students`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ student_code: code, name: name, email: email })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          if (res.status === 422 && Array.isArray(data.detail)) {
+            data.detail.forEach(err => {
+              const field = err.loc[err.loc.length - 1];
+              const msg = err.msg.replace(/^Value error,\s*/i, '');
+              if (field === "student_code") {
+                document.getElementById("form-enroll-code-error").textContent = msg;
+                document.getElementById("form-enroll-code").classList.add("invalid");
+              } else if (field === "name") {
+                document.getElementById("form-enroll-name-error").textContent = msg;
+                document.getElementById("form-enroll-name").classList.add("invalid");
+              } else if (field === "email") {
+                document.getElementById("form-enroll-email-error").textContent = msg;
+                document.getElementById("form-enroll-email").classList.add("invalid");
+              } else {
+                const errBox = document.getElementById("enroll-error-msg");
+                errBox.textContent = msg;
+                errBox.style.display = "block";
+              }
+            });
+          } else {
+            const errBox = document.getElementById("enroll-error-msg");
+            errBox.textContent = data.detail || "Failed to enroll student.";
+            errBox.style.display = "block";
+          }
+          return;
+        }
+
+        // Success
+        const sBox = document.getElementById("enroll-success-msg");
+        sBox.textContent = data.message || `Student ${code} enrolled successfully!`;
+        sBox.style.display = "block";
+
+        document.getElementById("form-enroll-code").value = "";
+        document.getElementById("form-enroll-name").value = "";
+        document.getElementById("form-enroll-email").value = "";
+
+        await load();
+
+        setTimeout(() => {
+          sBox.style.display = "none";
+        }, 3500);
+      } catch (err) {
+        const errBox = document.getElementById("enroll-error-msg");
+        errBox.textContent = "Network error while enrolling student.";
+        errBox.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Enroll Student";
+      }
+    }
+
+    // --- Sidebar Data Entry Handlers ---
+    function clearAttendanceErrors() {
+      document.getElementById("att-success-msg").style.display = "none";
+      document.getElementById("att-error-msg").style.display = "none";
+      document.getElementById("form-att-code-error").textContent = "";
+      document.getElementById("form-att-date-error").textContent = "";
+      document.getElementById("form-att-status-error").textContent = "";
+      document.getElementById("form-att-code").classList.remove("invalid");
+      document.getElementById("form-att-date").classList.remove("invalid");
+    }
+
+    async function submitAttendance(e) {
+      e.preventDefault();
+      clearAttendanceErrors();
+
+      const courseId = document.getElementById("course").value;
+      const code = document.getElementById("form-att-code").value.trim();
+      const date = document.getElementById("form-att-date").value;
+      const present = parseInt(document.getElementById("form-att-status").value, 10);
+
+      const submitBtn = document.getElementById("btn-att-submit");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/attendance`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ student_code: code, date: date, present: present })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 422 && Array.isArray(data.detail)) {
+            data.detail.forEach(err => {
+              const field = err.loc[err.loc.length - 1];
+              const msg = err.msg.replace(/^Value error,\s*/i, '');
+              if (field === "student_code") {
+                document.getElementById("form-att-code-error").textContent = msg;
+                document.getElementById("form-att-code").classList.add("invalid");
+              } else if (field === "date") {
+                document.getElementById("form-att-date-error").textContent = msg;
+                document.getElementById("form-att-date").classList.add("invalid");
+              } else {
+                const errBox = document.getElementById("att-error-msg");
+                errBox.textContent = msg;
+                errBox.style.display = "block";
+              }
+            });
+          } else {
+            const errBox = document.getElementById("form-att-code-error");
+            errBox.textContent = data.detail || "Failed to record attendance.";
+            document.getElementById("form-att-code").classList.add("invalid");
+          }
+          return;
+        }
+
+        // Success
+        const sBox = document.getElementById("att-success-msg");
+        sBox.textContent = data.message || `Attendance saved for ${code}.`;
+        sBox.style.display = "block";
+
+        document.getElementById("form-att-code").value = "";
+        await load();
+
+        setTimeout(() => {
+          sBox.style.display = "none";
+        }, 3500);
+      } catch (err) {
+        const errBox = document.getElementById("att-error-msg");
+        errBox.textContent = "Connection error while recording attendance.";
+        errBox.style.display = "block";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Save Attendance";
+      }
+    }
+
+    function clearMarkErrors() {
+      document.getElementById("mark-success-msg").style.display = "none";
+      document.getElementById("mark-error-msg").style.display = "none";
+      ["code", "cat", "assessment", "obtained", "total"].forEach(k => {
+        const errEl = document.getElementById(`form-mark-${k}-error`);
+        if (errEl) errEl.textContent = "";
+        const inpEl = document.getElementById(`form-mark-${k}`);
+        if (inpEl) inpEl.classList.remove("invalid");
+      });
+    }
+
+    async function submitMark(e) {
+      e.preventDefault();
+      clearMarkErrors();
+
+      const courseId = document.getElementById("course").value;
+      const code = document.getElementById("form-mark-code").value.trim();
+      const cat = document.getElementById("form-mark-cat").value;
+      const assessment = document.getElementById("form-mark-assessment").value.trim();
+      const obtainedVal = document.getElementById("form-mark-obtained").value;
+      const totalVal = document.getElementById("form-mark-total").value;
+
+      const obtained = obtainedVal !== "" ? parseFloat(obtainedVal) : NaN;
+      const total = totalVal !== "" ? parseFloat(totalVal) : NaN;
+
+      const submitBtn = document.getElementById("btn-mark-submit");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Saving...";
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/marks`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            student_code: code,
+            category: cat,
+            assessment: assessment,
+            obtained: obtained,
+            total: total
+          })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (res.status === 422 && Array.isArray(data.detail)) {
+            data.detail.forEach(err => {
+              const field = err.loc[err.loc.length - 1];
+              const msg = err.msg.replace(/^Value error,\s*/i, '');
+              if (field === "student_code") {
+                document.getElementById("form-mark-code-error").textContent = msg;
+                document.getElementById("form-mark-code").classList.add("invalid");
+              } else if (field === "category") {
+                document.getElementById("form-mark-cat-error").textContent = msg;
+                document.getElementById("form-mark-cat").classList.add("invalid");
+              } else if (field === "assessment") {
+                document.getElementById("form-mark-assessment-error").textContent = msg;
+                document.getElementById("form-mark-assessment").classList.add("invalid");
+              } else if (field === "obtained") {
+                document.getElementById("form-mark-obtained-error").textContent = msg;
+                document.getElementById("form-mark-obtained").classList.add("invalid");
+              } else if (field === "total") {
+                document.getElementById("form-mark-total-error").textContent = msg;
+                document.getElementById("form-mark-total").classList.add("invalid");
+              } else {
+                document.getElementById("form-mark-obtained-error").textContent = msg;
+                document.getElementById("form-mark-obtained").classList.add("invalid");
+              }
+            });
+          } else {
+            const errEl = document.getElementById("form-mark-code-error");
+            errEl.textContent = data.detail || "Failed to record mark.";
+            document.getElementById("form-mark-code").classList.add("invalid");
+          }
+          return;
+        }
+
+        // Success
+        const sBox = document.getElementById("mark-success-msg");
+        sBox.textContent = data.message || `Mark recorded for ${code}.`;
+        sBox.style.display = "block";
+
+        document.getElementById("form-mark-assessment").value = "";
+        document.getElementById("form-mark-obtained").value = "";
+        document.getElementById("form-mark-total").value = "";
+        await load();
+
+        setTimeout(() => {
+          sBox.style.display = "none";
+        }, 3500);
+      } catch (err) {
+        const errBox = document.getElementById("mark-error-msg");
+        errBox.textContent = "Connection error while recording mark.";
+        errBox.style.display = "block";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Save Mark";
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

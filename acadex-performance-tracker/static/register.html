@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Acadex · Faculty Registration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      background: #f4f6fb;
+      color: #1c2333;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      background: #1d3a8a;
+      color: #fff;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    header h2 { margin: 0; font-size: 20px; font-weight: 600; }
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+    .card {
+      background: #fff;
+      max-width: 460px;
+      width: 100%;
+      padding: 28px;
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+    }
+    h3 { margin-top: 0; margin-bottom: 8px; color: #1d3a8a; }
+    p.subtitle { margin-top: 0; margin-bottom: 20px; color: #555; font-size: 14px; }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccd;
+      border-radius: 6px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #1d3a8a;
+      box-shadow: 0 0 0 3px rgba(29,58,138,0.15);
+    }
+    input.invalid, select.invalid {
+      border-color: #b00020;
+      background-color: #fff9f9;
+    }
+    .field-error {
+      color: #b00020;
+      font-size: 12px;
+      margin-top: 4px;
+      min-height: 16px;
+    }
+    .alert-error {
+      background: #fde2e2;
+      color: #b00020;
+      border: 1px solid #f9bcbc;
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .req-hint {
+      font-size: 11px;
+      color: #666;
+      margin-top: 2px;
+    }
+    button.submit-btn {
+      width: 100%;
+      background: #1d3a8a;
+      color: #fff;
+      border: none;
+      padding: 11px;
+      border-radius: 6px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    button.submit-btn:hover { background: #162d6b; }
+    .footer-links {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 13px;
+      color: #555;
+    }
+    .footer-links a {
+      color: #1d3a8a;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .footer-links a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Acadex · Performance Tracker</h2>
+  </header>
+
+  <main>
+    <div class="card">
+      <h3>Faculty Registration</h3>
+      <p class="subtitle">Create an account to monitor student academic standing.</p>
+
+      <div id="general-error" class="alert-error"></div>
+
+      <form id="register-form" onsubmit="handleRegister(event)" novalidate>
+        <div class="form-group">
+          <label for="name">Full Name</label>
+          <input type="text" id="name" placeholder="Dr. Jane Doe" autocomplete="name" required>
+          <div class="field-error" id="name-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Institutional Email</label>
+          <input type="email" id="email" placeholder="faculty@diu.edu.bd" autocomplete="email" required>
+          <div class="field-error" id="email-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" placeholder="••••••••" autocomplete="new-password" required>
+          <div class="req-hint">Minimum 8 characters with at least one letter and one number.</div>
+          <div class="field-error" id="password-error"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="role">Role</label>
+          <select id="role">
+            <option value="faculty" selected>Faculty</option>
+          </select>
+          <div class="field-error" id="role-error"></div>
+        </div>
+
+        <button type="submit" class="submit-btn" id="btn-submit">Register Account</button>
+      </form>
+
+      <div class="footer-links">
+        Already registered? <a href="/login">Sign in here</a>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    if (localStorage.getItem("acadex_token")) {
+      window.location.href = "/";
+    }
+
+    function clearErrors() {
+      document.getElementById("general-error").style.display = "none";
+      document.getElementById("general-error").textContent = "";
+      ["name", "email", "password", "role"].forEach(id => {
+        const errEl = document.getElementById(`${id}-error`);
+        const inputEl = document.getElementById(id);
+        if (errEl) errEl.textContent = "";
+        if (inputEl) inputEl.classList.remove("invalid");
+      });
+    }
+
+    function validateClient(name, email, password) {
+      let hasError = false;
+
+      if (!name || name.trim().length < 2) {
+        document.getElementById("name-error").textContent = "Name must be at least 2 characters long.";
+        document.getElementById("name").classList.add("invalid");
+        hasError = true;
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email || !emailRegex.test(email)) {
+        document.getElementById("email-error").textContent = "Please enter a valid email address.";
+        document.getElementById("email").classList.add("invalid");
+        hasError = true;
+      }
+
+      const hasLetter = /[a-zA-Z]/.test(password);
+      const hasDigit = /\d/.test(password);
+      if (!password || password.length < 8) {
+        document.getElementById("password-error").textContent = "Password must be at least 8 characters long.";
+        document.getElementById("password").classList.add("invalid");
+        hasError = true;
+      } else if (!hasLetter || !hasDigit) {
+        document.getElementById("password-error").textContent = "Password must contain at least one letter and one number.";
+        document.getElementById("password").classList.add("invalid");
+        hasError = true;
+      }
+
+      return !hasError;
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      clearErrors();
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const role = document.getElementById("role").value;
+
+      if (!validateClient(name, email, password)) {
+        return;
+      }
+
+      const submitBtn = document.getElementById("btn-submit");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Creating Account...";
+
+      try {
+        const response = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password, role })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          if (response.status === 422 && Array.isArray(data.detail)) {
+            // Pydantic validation error list
+            data.detail.forEach(err => {
+              const field = err.loc[err.loc.length - 1];
+              const errEl = document.getElementById(`${field}-error`);
+              const inputEl = document.getElementById(field);
+              if (errEl) errEl.textContent = err.msg.replace(/^Value error,\s*/i, '');
+              if (inputEl) inputEl.classList.add("invalid");
+            });
+          } else if (response.status === 400 && data.detail && data.detail.toLowerCase().includes("email")) {
+            // Duplicate email error
+            const errEl = document.getElementById("email-error");
+            errEl.textContent = data.detail;
+            document.getElementById("email").classList.add("invalid");
+          } else {
+            const genErr = document.getElementById("general-error");
+            genErr.textContent = data.detail || "Registration failed. Please verify your details.";
+            genErr.style.display = "block";
+          }
+          return;
+        }
+
+        // Auto-login upon registration
+        localStorage.setItem("acadex_token", data.access_token);
+        localStorage.setItem("acadex_user", JSON.stringify(data.user));
+
+        // Redirect to dashboard
+        window.location.href = "/";
+      } catch (err) {
+        const genErr = document.getElementById("general-error");
+        genErr.textContent = "Server connection error. Please try again.";
+        genErr.style.display = "block";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Register Account";
+      }
+    }
+  </script>
+</body>
+</html>
