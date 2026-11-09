@@ -50,8 +50,14 @@ def compute_student_detail(db: Session, course_id: int, student: m.Student,
     components = {}
 
     # Attendance: attendance percentage scaled to plan's attendance max marks
+    # If a direct attendance mark exists, it wins over per-day attendance records
     att_max = plan_map.get("attendance", 7.0)
-    if not att:
+    direct_att_mark = next((mk for mk in marks if (getattr(mk, "category", "") or "").lower() == "attendance"), None)
+    if direct_att_mark is not None and direct_att_mark.total:
+        att_pct = round(direct_att_mark.obtained / direct_att_mark.total * 100, 1)
+        att_obtained = round(direct_att_mark.obtained / direct_att_mark.total * att_max, 2)
+        att_status = "low" if att_pct < attendance_threshold else "ok"
+    elif not att:
         att_pct = None
         att_obtained = 0.0
         att_status = "pending"

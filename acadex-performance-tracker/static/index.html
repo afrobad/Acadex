@@ -393,6 +393,94 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
       padding: 28px;
     }
+    .spreadsheet-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 24px;
+    }
+    .spreadsheet-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: #fff;
+    }
+    .spreadsheet-table th {
+      background: #f8fafc;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #475569;
+      padding: 10px 8px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+      white-space: nowrap;
+    }
+    .spreadsheet-table th.col-student {
+      text-align: left;
+      padding-left: 12px;
+    }
+    .spreadsheet-table td {
+      border: 1px solid #e2e8f0;
+      padding: 6px 8px;
+      text-align: center;
+      vertical-align: middle;
+    }
+    .spreadsheet-table tr:hover td {
+      background: #f8fafc;
+    }
+    .grid-mark-input {
+      width: 100%;
+      max-width: 68px;
+      text-align: center;
+      padding: 5px 4px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      box-sizing: border-box;
+      transition: all 0.15s ease;
+    }
+    .grid-mark-input:focus {
+      outline: none;
+      border-color: #1d3a8a;
+      box-shadow: 0 0 0 2px rgba(29, 58, 138, 0.15);
+      background: #fff;
+    }
+    .grid-mark-input.input-dirty {
+      background: #fffbeb !important;
+      border-color: #f59e0b !important;
+      color: #b45309 !important;
+    }
+    .grid-mark-input.input-error {
+      background: #fef2f2 !important;
+      border-color: #ef4444 !important;
+      color: #b91c1c !important;
+    }
+    .grid-pending-input {
+      width: 100%;
+      max-width: 68px;
+      text-align: center;
+      padding: 5px 4px;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #94a3b8;
+      background: #f1f5f9;
+      cursor: not-allowed;
+      box-sizing: border-box;
+    }
+    .cell-error-msg {
+      font-size: 10px;
+      color: #dc2626;
+      font-weight: 600;
+      margin-top: 2px;
+      white-space: nowrap;
+    }
     .spreadsheet-mock-table {
       width: 100%;
       border-collapse: collapse;
@@ -678,89 +766,58 @@
     <!-- TAB 2: MARKS ENTRY (Spreadsheet-Style Grid)-->
     <!-- ========================================== -->
     <div class="tab-pane" id="tab-marks">
-      <div class="placeholder-card">
+      <div class="spreadsheet-card">
+        <!-- Top Toolbar -->
         <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
           <div>
-            <h3 style="margin:0 0 6px 0; color:#1d3a8a; font-size:18px;">📝 Spreadsheet-Style Marks Entry</h3>
+            <h3 style="margin:0 0 4px 0; color:#1d3a8a; font-size:18px; display:flex; align-items:center; gap:8px;">
+              <span>📝</span> Spreadsheet Marks Entry
+            </h3>
             <p style="margin:0; font-size:13px; color:#64748b;">
-              Quick tabular grid for fast inline grade entry. Changes are validated in real-time against active assessment weights.
+              Quick tabular grid for live mark entry. Changes are validated in real-time against active assessment weights.
             </p>
           </div>
-          <span style="background:#e0e7ff; color:#1d3a8a; font-weight:700; padding:5px 12px; border-radius:99px; font-size:12px;">
-            Feature In Progress · Grid View
-          </span>
-        </div>
-
-        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#475569; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <div>
-            Active Course: <strong id="marks-active-course-badge" style="color:#1d3a8a;">Selected Course</strong> · Editing mode active
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button type="button" class="secondary-btn" style="padding:6px 12px; font-size:12px;" onclick="alert('Export will be enabled in next step.')">📥 Export CSV</button>
-            <button type="button" class="primary-btn" style="padding:6px 12px; font-size:12px;" onclick="alert('Spreadsheet batch saving is coming next.')">💾 Save All Marks</button>
+          <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div style="background:#f1f5f9; border:1px solid #cbd5e1; border-radius:6px; padding:6px 12px; font-size:12px; color:#475569;">
+              Active: <strong id="marks-active-course-badge" style="color:#1d3a8a;">Selected Course</strong>
+            </div>
+            <button type="button" id="marks-save-btn" class="primary-btn" onclick="saveMarksGrid()" style="padding:7px 18px; font-size:13px; font-weight:700; display:flex; align-items:center; gap:6px;">
+              <span>💾</span>
+              <span id="marks-save-text">Save Changes</span>
+              <span id="marks-dirty-badge" style="background:#ef4444; color:#fff; border-radius:99px; font-size:11px; font-weight:700; padding:1px 7px; display:none;">0</span>
+            </button>
           </div>
         </div>
 
-        <!-- Spreadsheet Mockup Grid -->
-        <div style="overflow-x:auto;">
-          <table class="spreadsheet-mock-table">
-            <thead>
-              <tr>
-                <th style="width:40px;">#</th>
-                <th style="min-width:110px;">Student ID</th>
-                <th style="min-width:160px; text-align:left;">Student Name</th>
-                <th>Quiz (15)</th>
-                <th>Assignment (5)</th>
-                <th>Midterm (30)</th>
-                <th>Presentation (8)</th>
-                <th>Attendance (7)</th>
-                <th>Final-Term (40)</th>
-                <th>Standing</th>
-              </tr>
+        <!-- Filter & Search Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px;">
+          <div style="display:flex; align-items:center; gap:8px; flex:1; max-width:360px;">
+            <span style="font-size:14px; color:#64748b;">🔍</span>
+            <input type="text" id="marks-search-input" placeholder="Search student ID or name..." oninput="filterMarksGrid()" style="width:100%; padding:6px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px;">
+          </div>
+          <div style="font-size:12px; color:#64748b; display:flex; align-items:center; gap:12px;">
+            <span><span style="display:inline-block; width:10px; height:10px; background:#fffbeb; border:1px solid #f59e0b; border-radius:2px; margin-right:4px;"></span>Unsaved changes</span>
+            <span><span style="display:inline-block; width:10px; height:10px; background:#fef2f2; border:1px solid #ef4444; border-radius:2px; margin-right:4px;"></span>Invalid bounds</span>
+          </div>
+        </div>
+
+        <!-- Feedback Alert Banner -->
+        <div id="marks-feedback-banner" style="display:none; padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:12px;"></div>
+
+        <!-- Grid Table Container -->
+        <div style="overflow-x:auto; border:1px solid #e2e8f0; border-radius:8px;">
+          <table class="spreadsheet-table" id="marks-grid-table">
+            <thead id="marks-grid-thead">
+              <!-- Dynamically populated headers with max marks -->
             </thead>
-            <tbody>
-              <tr>
-                <td>1</td>
-                <td><strong>241-35-101</strong></td>
-                <td style="text-align:left;">Rafi Ahmed</td>
-                <td><input type="text" value="13.5" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="4.5" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="26.0" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="7.0" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="6.5" readonly style="background:#f8fafc;"></td>
-                <td><span style="color:#94a3b8; font-style:italic;">Pending</span></td>
-                <td><span class="badge ok">OK</span></td>
-              </tr>
-              <tr>
-                <td>2</td>
-                <td><strong>241-35-102</strong></td>
-                <td style="text-align:left;">Nusrat Jahan</td>
-                <td><input type="text" value="11.0" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="4.0" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="18.0" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="5.5" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="5.8" readonly style="background:#f8fafc;"></td>
-                <td><span style="color:#94a3b8; font-style:italic;">Pending</span></td>
-                <td><span class="badge warning">WARNING</span></td>
-              </tr>
-              <tr>
-                <td>3</td>
-                <td><strong>241-35-103</strong></td>
-                <td style="text-align:left;">Tanvir Hasan</td>
-                <td><input type="text" value="8.0" readonly style="background:#fff5f5; color:#b00020; font-weight:700;"></td>
-                <td><input type="text" value="2.5" readonly style="background:#fff5f5; color:#b00020; font-weight:700;"></td>
-                <td><input type="text" value="12.0" readonly style="background:#fff5f5; color:#b00020; font-weight:700;"></td>
-                <td><input type="text" value="4.0" readonly style="background:#f8fafc;"></td>
-                <td><input type="text" value="3.2" readonly style="background:#fff5f5; color:#b00020; font-weight:700;"></td>
-                <td><span style="color:#94a3b8; font-style:italic;">Pending</span></td>
-                <td><span class="badge critical">CRITICAL</span></td>
-              </tr>
+            <tbody id="marks-grid-tbody">
+              <!-- Dynamically populated student rows -->
             </tbody>
           </table>
         </div>
 
-        <p style="font-size:12px; color:#64748b; margin-top:14px;">
-          💡 Full inline spreadsheet editing and live grading grid will be integrated in the upcoming release.
+        <p style="font-size:12px; color:#64748b; margin-top:14px; margin-bottom:0;">
+          💡 Tip: Use <kbd style="background:#f1f5f9; padding:2px 5px; border-radius:4px; border:1px solid #cbd5e1;">Tab</kbd> to quickly jump across student cells. Saving immediately recalculates standings, risk alerts, and overview charts.
         </p>
       </div>
     </div>
@@ -1176,6 +1233,336 @@
       if (e.key === "Escape") closeDetail();
     });
 
+    // ==========================================
+    // TAB 2: MARKS ENTRY GRID LOGIC
+    // ==========================================
+    let currentGridData = null;
+    let initialGridValues = {}; // { [student_code]: { [assessment]: number|null } }
+    let dirtyGridCells = new Set(); // Set of "student_code::assessment"
+    let gridValidationErrors = new Set(); // Set of "student_code::assessment"
+
+    function showMarksFeedback(msg, type = "info") {
+      const banner = document.getElementById("marks-feedback-banner");
+      if (!banner) return;
+      banner.style.display = "block";
+      if (type === "success") {
+        banner.style.background = "#ecfdf5";
+        banner.style.color = "#065f46";
+        banner.style.border = "1px solid #a7f3d0";
+      } else if (type === "error") {
+        banner.style.background = "#fef2f2";
+        banner.style.color = "#991b1b";
+        banner.style.border = "1px solid #fecaca";
+      } else {
+        banner.style.background = "#eff6ff";
+        banner.style.color = "#1e40af";
+        banner.style.border = "1px solid #bfdbfe";
+      }
+      banner.textContent = msg;
+      if (type === "success" || type === "info") {
+        setTimeout(() => {
+          if (banner.textContent === msg) {
+            banner.style.display = "none";
+          }
+        }, 5000);
+      }
+    }
+
+    async function loadMarksGrid() {
+      const courseId = document.getElementById("course").value;
+      if (!courseId) return;
+
+      const courseSelect = document.getElementById("course");
+      const selectedText = courseSelect.options[courseSelect.selectedIndex]?.text || "Selected Course";
+      const marksBadge = document.getElementById("marks-active-course-badge");
+      if (marksBadge) marksBadge.textContent = selectedText;
+
+      const thead = document.getElementById("marks-grid-thead");
+      const tbody = document.getElementById("marks-grid-tbody");
+      if (!thead || !tbody) return;
+
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:30px; color:#64748b;">Loading marks grid...</td></tr>`;
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/marks/grid`, {
+          headers: authHeaders()
+        });
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        if (!res.ok) {
+          tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:24px; color:#b91c1c;">Error loading grid data (${res.status})</td></tr>`;
+          return;
+        }
+        const data = await res.json();
+        currentGridData = data;
+        initialGridValues = {};
+        dirtyGridCells.clear();
+        gridValidationErrors.clear();
+        updateDirtyBadge();
+
+        // 1. Render Table Head
+        let thHtml = `<tr>
+          <th style="width:40px;">#</th>
+          <th style="min-width:115px;">Student ID</th>
+          <th class="col-student" style="min-width:160px;">Student Name</th>`;
+
+        data.columns.forEach(col => {
+          const isPending = col.disabled || col.pending;
+          const maxLabel = col.max_marks !== undefined ? ` (${col.max_marks})` : '';
+          const pendingBadge = isPending ? ` <span style="font-size:10px; background:#f1f5f9; color:#64748b; padding:1px 5px; border-radius:4px;">Pending</span>` : '';
+          thHtml += `<th style="min-width:90px;">${col.label}${maxLabel}${pendingBadge}</th>`;
+        });
+        thHtml += `</tr>`;
+        thead.innerHTML = thHtml;
+
+        // 2. Render Table Body
+        if (!data.students || data.students.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="${data.columns.length + 3}" style="text-align:center; padding:36px 16px; color:#64748b; font-size:14px;"><div style="font-size:28px; margin-bottom:8px;">👥</div><strong>No students enrolled yet</strong><div style="font-size:12px; color:#94a3b8; margin-top:4px;">Switch to the "Course Setup" tab above to enroll students into this course.</div></td></tr>`;
+          return;
+        }
+
+        let tbHtml = '';
+        data.students.forEach((st, idx) => {
+          initialGridValues[st.student_code] = {};
+
+          tbHtml += `<tr class="grid-student-row" data-code="${st.student_code.toLowerCase()}" data-name="${st.name.toLowerCase()}">
+            <td style="color:#64748b; font-weight:600;">${idx + 1}</td>
+            <td><strong>${st.student_code}</strong></td>
+            <td style="text-align:left; font-weight:500;">${st.name}</td>`;
+
+          data.columns.forEach(col => {
+            const isPending = col.disabled || col.pending;
+            const assessName = col.assessment;
+            const rawVal = st.marks ? st.marks[assessName] : undefined;
+            const val = rawVal !== undefined ? rawVal : '';
+            initialGridValues[st.student_code][assessName] = rawVal !== undefined ? rawVal : null;
+
+            if (isPending) {
+              tbHtml += `<td><input type="text" value="Pending" disabled class="grid-pending-input" title="Final-Term is pending"></td>`;
+            } else {
+              const safeKey = `${st.student_code}-${col.key}`;
+              tbHtml += `<td>
+                <input type="number"
+                  step="0.1"
+                  min="0"
+                  max="${col.max_marks}"
+                  class="grid-mark-input"
+                  data-student="${st.student_code}"
+                  data-category="${col.category}"
+                  data-assessment="${assessName}"
+                  data-total="${col.max_marks}"
+                  data-colkey="${col.key}"
+                  value="${val}"
+                  oninput="onMarkCellInput(this)"
+                  onchange="onMarkCellChange(this)">
+                <div class="cell-error-msg" id="err-${safeKey}" style="display:none;"></div>
+              </td>`;
+            }
+          });
+
+          tbHtml += `</tr>`;
+        });
+        tbody.innerHTML = tbHtml;
+
+        // Apply any active search filter
+        filterMarksGrid();
+      } catch (err) {
+        console.error("Failed to load marks grid:", err);
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:24px; color:#b91c1c;">Failed to load marks grid.</td></tr>`;
+      }
+    }
+
+    function onMarkCellInput(input) {
+      validateAndTrackCell(input);
+    }
+
+    function onMarkCellChange(input) {
+      validateAndTrackCell(input);
+    }
+
+    function validateAndTrackCell(input) {
+      const studentCode = input.dataset.student;
+      const assessment = input.dataset.assessment;
+      const total = parseFloat(input.dataset.total);
+      const colKey = input.dataset.colkey;
+      const safeKey = `${studentCode}-${colKey}`;
+      const errEl = document.getElementById(`err-${safeKey}`);
+      const cellKey = `${studentCode}::${assessment}`;
+
+      const rawValStr = input.value.trim();
+      let isValid = true;
+      let errorText = "";
+
+      if (rawValStr !== "") {
+        const numVal = parseFloat(rawValStr);
+        if (isNaN(numVal)) {
+          isValid = false;
+          errorText = "Invalid number";
+        } else if (numVal < 0) {
+          isValid = false;
+          errorText = "Must be ≥ 0";
+        } else if (numVal > total) {
+          isValid = false;
+          errorText = `Max ${total}`;
+        }
+      }
+
+      if (!isValid) {
+        input.classList.add("input-error");
+        gridValidationErrors.add(cellKey);
+        if (errEl) {
+          errEl.textContent = errorText;
+          errEl.style.display = "block";
+        }
+      } else {
+        input.classList.remove("input-error");
+        gridValidationErrors.delete(cellKey);
+        if (errEl) {
+          errEl.style.display = "none";
+        }
+      }
+
+      // Check dirty status
+      const initialVal = initialGridValues[studentCode]?.[assessment];
+      let hasChanged = false;
+
+      if (rawValStr === "") {
+        if (initialVal !== null && initialVal !== undefined) {
+          hasChanged = true;
+        }
+      } else {
+        const numVal = parseFloat(rawValStr);
+        if (initialVal === null || initialVal === undefined || isNaN(initialVal)) {
+          hasChanged = true;
+        } else if (Math.abs(numVal - initialVal) > 0.001) {
+          hasChanged = true;
+        }
+      }
+
+      if (hasChanged && isValid) {
+        input.classList.add("input-dirty");
+        dirtyGridCells.add(cellKey);
+      } else if (!hasChanged) {
+        input.classList.remove("input-dirty");
+        dirtyGridCells.delete(cellKey);
+      }
+
+      updateDirtyBadge();
+    }
+
+    function updateDirtyBadge() {
+      const badge = document.getElementById("marks-dirty-badge");
+      const saveText = document.getElementById("marks-save-text");
+      const count = dirtyGridCells.size;
+
+      if (badge) {
+        if (count > 0) {
+          badge.textContent = count;
+          badge.style.display = "inline-block";
+        } else {
+          badge.style.display = "none";
+        }
+      }
+
+      if (saveText) {
+        saveText.textContent = count > 0 ? `Save Changes (${count})` : "Save Changes";
+      }
+    }
+
+    function filterMarksGrid() {
+      const searchInput = document.getElementById("marks-search-input");
+      if (!searchInput) return;
+      const query = searchInput.value.toLowerCase().trim();
+      const rows = document.querySelectorAll(".grid-student-row");
+
+      rows.forEach(row => {
+        const code = row.dataset.code || "";
+        const name = row.dataset.name || "";
+        if (!query || code.includes(query) || name.includes(query)) {
+          row.style.display = "";
+        } else {
+          row.style.display = "none";
+        }
+      });
+    }
+
+    async function saveMarksGrid() {
+      const courseId = document.getElementById("course").value;
+      if (!courseId) return;
+
+      if (gridValidationErrors.size > 0) {
+        showMarksFeedback("Please fix the invalid cells highlighted in red before saving.", "error");
+        return;
+      }
+
+      if (dirtyGridCells.size === 0) {
+        showMarksFeedback("No changes to save.", "info");
+        return;
+      }
+
+      // Collect payload of only changed cells
+      const payload = [];
+      const inputs = document.querySelectorAll(".grid-mark-input");
+      inputs.forEach(input => {
+        const studentCode = input.dataset.student;
+        const assessment = input.dataset.assessment;
+        const cellKey = `${studentCode}::${assessment}`;
+
+        if (dirtyGridCells.has(cellKey)) {
+          const rawVal = input.value.trim();
+          if (rawVal !== "") {
+            payload.push({
+              student_code: studentCode,
+              category: input.dataset.category,
+              assessment: assessment,
+              obtained: parseFloat(rawVal),
+              total: parseFloat(input.dataset.total)
+            });
+          }
+        }
+      });
+
+      const saveBtn = document.getElementById("marks-save-btn");
+      const saveText = document.getElementById("marks-save-text");
+      if (saveBtn) saveBtn.disabled = true;
+      if (saveText) saveText.textContent = "Saving...";
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/marks/bulk`, {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload)
+        });
+
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+
+        const data = await res.json();
+        if (!res.ok) {
+          showMarksFeedback(`Save failed: ${data.detail || "Server error"}`, "error");
+          return;
+        }
+
+        showMarksFeedback(`✓ ${data.message || "Marks saved successfully."}`, "success");
+
+        // Immediately refresh:
+        // 1. Grid table & dirty states
+        await loadMarksGrid();
+        // 2. Overview table, summary cards, and charts
+        await load();
+      } catch (err) {
+        console.error("Failed to save marks:", err);
+        showMarksFeedback("Network error while saving marks.", "error");
+      } finally {
+        if (saveBtn) saveBtn.disabled = false;
+        updateDirtyBadge();
+      }
+    }
+
     // Top Tab Switcher
     function switchTab(tabId) {
       document.querySelectorAll('.nav-tab').forEach(b => {
@@ -1188,6 +1575,9 @@
       if (tabId === 'overview') {
         if (doughnutChartInstance) doughnutChartInstance.resize();
         if (rankingChartInstance) rankingChartInstance.resize();
+      }
+      if (tabId === 'marks') {
+        loadMarksGrid();
       }
       if (tabId === 'setup') {
         updateSetupCourseBadges();
@@ -1229,6 +1619,10 @@
     document.getElementById("course").addEventListener("change", () => {
       load();
       updateSetupCourseBadges();
+      const activeTab = document.querySelector('.nav-tab.active')?.dataset.tab;
+      if (activeTab === 'marks') {
+        loadMarksGrid();
+      }
     });
 
     async function init() {
