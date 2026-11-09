@@ -82,6 +82,13 @@ def seed_database(verbose=True):
         db.add(m.AssessmentPlan(course_id=course_se412.id, category=cat, max_marks=max_m))
     db.flush()
 
+    # 4b. Danger Zone Rules
+    db.add(m.DangerZoneRule(course_id=course_se331.id, quiz_limit=10.0, midterm_limit=15.0, class_limit=15.0))
+    db.add(m.DangerZoneRule(course_id=course_se311.id, quiz_limit=10.0, midterm_limit=15.0, class_limit=15.0))
+    db.add(m.DangerZoneRule(course_id=course_cse221.id, quiz_limit=10.0, midterm_limit=15.0, class_limit=15.0))
+    db.add(m.DangerZoneRule(course_id=course_se412.id, quiz_limit=12.0, midterm_limit=15.0, class_limit=15.0))
+    db.flush()
+
     # 5. Helper function to seed attendance and marks for a course cohort
     def seed_cohort(course_obj, student_profile_pairs, start_date):
         for s, p in student_profile_pairs:

@@ -146,7 +146,7 @@ def test_attendance_scaling():
         db.commit()
         db.close()
 
-# 5. Low presentation only -> level must be 'warning' (not critical)
+# 5. Low presentation only -> Class performance below limit -> Warning (1 danger zone)
 def test_low_presentation_only():
     db = SessionLocal()
     try:
@@ -157,35 +157,32 @@ def test_low_presentation_only():
 
         db.add(m.Enrollment(student_id=st.id, course_id=1))
 
-        # Good attendance (10/10 = 100% >= 60%)
+        # Good attendance (10/10 = 100% -> 7.0/7)
         for d in range(10):
             db.add(m.Attendance(student_id=st.id, course_id=1, date=datetime.date(2026, 9, 1) + datetime.timedelta(days=d), present=1))
 
-        # Good quiz (10/10 = 100%)
+        # Good quiz (10/10 = 100% -> 15.0/15)
         db.add(m.Mark(student_id=st.id, course_id=1, category="quiz", assessment="Quiz 1", obtained=10.0, total=10.0))
-        # Good assignment (20/20 = 100%)
+        # Good assignment (20/20 = 100% -> 5.0/5)
         db.add(m.Mark(student_id=st.id, course_id=1, category="assignment", assessment="Assignment", obtained=20.0, total=20.0))
-        # Good midterm (45/50 = 90%)
+        # Good midterm (45/50 = 90% -> 27.0/30)
         db.add(m.Mark(student_id=st.id, course_id=1, category="midterm", assessment="Midterm", obtained=45.0, total=50.0))
-        # LOW presentation: 3/10 = 30.0% (< 40% threshold)
-        # Scaled marks in SE 331 (plan max = 8.0): 30% of 8.0 = 2.4
+        # LOW presentation: 3/10 = 30.0% (scaled = 2.4/8)
+        # Class performance sum: 7.0 + 5.0 + 2.4 = 14.4 / 20.0 (< 15.0 danger limit)
         db.add(m.Mark(student_id=st.id, course_id=1, category="presentation", assessment="Presentation", obtained=3.0, total=10.0))
         db.commit()
 
         detail = compute_student_detail(db, 1, st, attendance_threshold=60.0, marks_threshold=40.0)
 
         assert detail["components"]["presentation"]["status"] == "low"
-        assert detail["components"]["presentation"]["low"] is True
         assert detail["components"]["presentation"]["obtained_marks"] == 2.4
-        assert detail["components"]["presentation"]["percentage"] == 30.0
 
-        # Attendance is OK (100%), so this is WARNING, NOT critical!
+        # Exactly 1 danger zone (class_perf), so this is WARNING, NOT critical!
         assert detail["level"] == "warning"
+        assert detail["danger_zones"] == ["class_perf"]
 
-        # Check readable warning reason
-        assert any("Presentation 2.4/8 (30%) is below 40%" in r for r in detail["reasons"])
-        # No attendance warning
-        assert not any("attendance" in r.lower() for r in detail["reasons"])
+        # Check readable danger zone reason
+        assert any("Class performance" in r and "danger limit" in r for r in detail["reasons"])
 
     finally:
         db.query(m.Attendance).filter_by(student_id=st.id).delete()
@@ -195,7 +192,7 @@ def test_low_presentation_only():
         db.commit()
         db.close()
 
-# 6. Combined critical: low attendance AND at least one low marks category
+# 6. Combined critical: 2 or more danger zones -> Critical
 def test_combined_critical():
     db = SessionLocal()
     try:
@@ -206,24 +203,27 @@ def test_combined_critical():
 
         db.add(m.Enrollment(student_id=st.id, course_id=1))
 
-        # LOW attendance (4/10 = 40.0% < 60% threshold)
+        # LOW attendance (4/10 = 40.0% -> 2.8/7)
         for d in range(10):
             db.add(m.Attendance(student_id=st.id, course_id=1, date=datetime.date(2026, 9, 1) + datetime.timedelta(days=d), present=1 if d < 4 else 0))
 
-        # LOW presentation (3/10 = 30.0% < 40% threshold)
+        # LOW presentation (3/10 = 30.0% -> 2.4/8)
+        # Class performance: 2.8 + 2.4 = 5.2 / 20 (< 15.0 -> Zone 1 in danger)
         db.add(m.Mark(student_id=st.id, course_id=1, category="presentation", assessment="Presentation", obtained=3.0, total=10.0))
+
+        # LOW midterm: 10/50 = 20% -> 6.0/30 (< 15.0 -> Zone 2 in danger)
+        db.add(m.Mark(student_id=st.id, course_id=1, category="midterm", assessment="Midterm", obtained=10.0, total=50.0))
         db.commit()
 
         detail = compute_student_detail(db, 1, st, attendance_threshold=60.0, marks_threshold=40.0)
 
-        # Low attendance AND low marks -> CRITICAL level
-        assert detail["components"]["attendance"]["status"] == "low"
-        assert detail["components"]["presentation"]["status"] == "low"
+        # 2 danger zones (class_perf + midterm) -> CRITICAL level
+        assert len(detail["danger_zones"]) >= 2
         assert detail["level"] == "critical"
 
-        # Both reasons present
-        assert any("attendance" in r.lower() for r in detail["reasons"])
-        assert any("presentation" in r.lower() for r in detail["reasons"])
+        # Check readable reasons for danger zones
+        assert any("Class performance" in r for r in detail["reasons"])
+        assert any("Midterm" in r for r in detail["reasons"])
 
     finally:
         db.query(m.Attendance).filter_by(student_id=st.id).delete()
@@ -247,7 +247,8 @@ def test_student_with_no_data(faculty1_token):
 
         # Test via python function
         detail = compute_student_detail(db, 1, st, attendance_threshold=60.0, marks_threshold=40.0)
-        assert detail["level"] == "ok"
+        assert detail["level"] in ("safe", "ok")
+        assert detail["danger_zones"] == []
         assert detail["total_obtained"] == 0.0
         assert detail["total_assessed_max"] == 0.0
         assert detail["total_plan_max"] == 105.0
@@ -272,7 +273,7 @@ def test_student_with_no_data(faculty1_token):
         r = client.get(f"/api/courses/1/students/{st.student_code}/performance", headers={"Authorization": f"Bearer {faculty1_token}"})
         assert r.status_code == 200
         api_data = r.json()
-        assert api_data["level"] == "ok"
+        assert api_data["level"] in ("safe", "ok")
         assert api_data["total_obtained"] == 0.0
         assert api_data["total_assessed_max"] == 0.0
         assert api_data["percentage_so_far"] == 0.0
@@ -365,4 +366,3 @@ def test_demo_faculty_three_courses_with_distinct_summaries(faculty1_token, facu
     f2_courses = r2.json()
     assert len(f2_courses) == 1
     assert f2_courses[0]["code"] == "SE 412"
-

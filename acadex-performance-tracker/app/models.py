@@ -21,6 +21,17 @@ class Course(Base):
 
     faculty = relationship("User", back_populates="courses")
     assessment_plans = relationship("AssessmentPlan", back_populates="course", cascade="all, delete-orphan")
+    danger_zone_rule = relationship("DangerZoneRule", back_populates="course", uselist=False, cascade="all, delete-orphan")
+
+class DangerZoneRule(Base):
+    __tablename__ = "danger_zone_rules"
+    id = Column(Integer, primary_key=True)
+    course_id = Column(Integer, ForeignKey("courses.id"), unique=True, nullable=False, index=True)
+    quiz_limit = Column(Float, nullable=False, default=10.0)
+    midterm_limit = Column(Float, nullable=False, default=15.0)
+    class_limit = Column(Float, nullable=False, default=15.0)
+
+    course = relationship("Course", back_populates="danger_zone_rule")
 
 class AssessmentPlan(Base):
     __tablename__ = "assessment_plans"

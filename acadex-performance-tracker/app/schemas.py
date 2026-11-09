@@ -251,3 +251,15 @@ class StudentEnrollOut(BaseModel):
     course_id: int
     course_code: str
     message: str
+
+class DangerZoneRuleOut(BaseModel):
+    course_id: int
+    quiz_limit: float
+    midterm_limit: float
+    class_limit: float
+    max_possible: dict[str, float]
+
+class DangerZoneRuleUpdate(BaseModel):
+    quiz_limit: float = Field(..., ge=0, description="Quiz danger threshold")
+    midterm_limit: float = Field(..., ge=0, description="Midterm danger threshold")
+    class_limit: float = Field(..., ge=0, description="Class performance danger threshold")
