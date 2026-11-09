@@ -1,7 +1,45 @@
+# ==============================
+# Java / Maven / Spring Boot
+# ==============================
+target/
+*.class
+*.log
+
+# ==============================
+# Spring Boot environment
+# ==============================
 .env
-acadex.db
+.env.*
+!.env.example
+application-local.properties
+application-local.yml
+
+# ==============================
+# Python
+# ==============================
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
 venv/
 .pytest_cache/
+acadex.db
+
+# ==============================
+# Node.js / React
+# ==============================
+node_modules/
+dist/
+.vite/
+
+# ==============================
+# IDE
+# ==============================
+.idea/
+*.iml
+.vscode/
+
+# ==============================
+# OS
+# ==============================
+.DS_Store
+Thumbs.db
