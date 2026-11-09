@@ -341,7 +341,83 @@
     .badge { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
     .critical { background: #fde2e2; color: #b00020; }
     .warning { background: #fff1d6; color: #8a5a00; }
-    .ok { background: #dff5e3; color: #176b2c; }
+    .ok, .safe { background: #dff5e3; color: #176b2c; }
+    .badge.danger-pill { background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; font-size: 11px; padding: 2px 7px; border-radius: 99px; font-weight: 700; white-space: nowrap; display: inline-block; }
+    .badge.safe-pill { background: #dcfce7; color: #15803d; border: 1px solid #86efac; font-size: 11px; padding: 2px 7px; border-radius: 99px; font-weight: 700; white-space: nowrap; display: inline-block; }
+
+    /* Focus Lists */
+    .two-lists-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 4px;
+    }
+    .focus-list-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      padding: 16px 18px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      display: flex;
+      flex-direction: column;
+    }
+    .focus-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .focus-list-items {
+      max-height: 240px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .focus-student-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid #f1f5f9;
+      background: #fafbfc;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .focus-student-item:hover {
+      background: #f0f4ff;
+      border-color: #cbd5e1;
+    }
+    .focus-student-item.crit:hover {
+      background: #fff5f5;
+      border-color: #fca5a5;
+    }
+
+    /* Danger Zone Modal Grid */
+    .danger-zone-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .danger-zone-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .danger-zone-card.in-danger {
+      background: #fff5f5;
+      border: 1.5px solid #ef4444;
+    }
+    .danger-zone-card.is-safe {
+      background: #f0fdf4;
+      border: 1.5px solid #86efac;
+    }
     ul { margin: 0; padding-left: 16px; }
     li { margin-bottom: 2px; }
     .empty-state { text-align: center; padding: 40px; color: #64748b; font-size: 14px; background: #fff; border-radius: 10px; }
@@ -605,6 +681,12 @@
       .charts-row {
         grid-template-columns: 1fr;
       }
+      .two-lists-container {
+        grid-template-columns: 1fr;
+      }
+      .danger-zone-grid {
+        grid-template-columns: 1fr;
+      }
       .setup-grid {
         grid-template-columns: 1fr;
       }
@@ -688,7 +770,7 @@
         <div class="cards">
           <div class="card crit"><b id="c1">-</b>Critical</div>
           <div class="card warn"><b id="c2">-</b>Warning</div>
-          <div class="card ok"><b id="c3">-</b>OK</div>
+          <div class="card ok"><b id="c3">-</b>Safe</div>
         </div>
 
         <!-- Assessment Plan Overview Card -->
@@ -712,12 +794,12 @@
           <div id="plan-total-banner" style="margin-top:14px;"></div>
         </div>
 
-        <!-- Charts Row -->
+        <!-- Charts Row (Risk Distribution & Danger Zone Bar Chart) -->
         <div class="charts-row">
           <div class="chart-box">
             <div class="chart-title">
               <span>Student Risk Distribution</span>
-              <span class="chart-hint">Course cohort breakdown</span>
+              <span class="chart-hint">Course cohort risk breakdown</span>
             </div>
             <div style="position:relative;flex:1;min-height:220px;max-height:240px;display:flex;justify-content:center;">
               <canvas id="doughnutChart"></canvas>
@@ -726,23 +808,62 @@
 
           <div class="chart-box">
             <div class="chart-title">
-              <span>Overall Performance Ranking</span>
-              <span class="chart-hint">Percentage So Far (%) · Click bar to inspect</span>
+              <span>Students per Danger Zone</span>
+              <span class="chart-hint">Enrolled students active in each danger zone</span>
             </div>
-            <div class="ranking-scroll-container">
-              <div id="rankingChartWrapper" style="position:relative; width:100%;">
-                <canvas id="rankingChart"></canvas>
-              </div>
+            <div style="position:relative;flex:1;min-height:220px;max-height:240px;display:flex;justify-content:center;">
+              <canvas id="dangerZoneChart"></canvas>
             </div>
           </div>
         </div>
 
-        <!-- Student Table -->
+        <!-- Overall Performance Ranking (Full Width) -->
+        <div class="chart-box">
+          <div class="chart-title">
+            <span>Overall Performance Ranking</span>
+            <span class="chart-hint">Percentage So Far (%) · Click bar to inspect student</span>
+          </div>
+          <div class="ranking-scroll-container">
+            <div id="rankingChartWrapper" style="position:relative; width:100%;">
+              <canvas id="rankingChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two Lists: Doing Well & Needs Attention -->
+        <div class="two-lists-container">
+          <!-- Doing Well Card -->
+          <div class="focus-list-card">
+            <div class="focus-list-header">
+              <div style="font-weight:700; color:#15803d; font-size:14px; display:flex; align-items:center; gap:6px;">
+                <span>🌟</span> Doing Well
+                <span id="doing-well-badge" style="font-size:11px; font-weight:700; color:#15803d; background:#dcfce7; padding:2px 8px; border-radius:99px;">0</span>
+              </div>
+              <span style="font-size:11px; color:#64748b;">Safe students · Highest score so far</span>
+            </div>
+            <div id="doing-well-list" class="focus-list-items"></div>
+          </div>
+
+          <!-- Needs Attention Card -->
+          <div class="focus-list-card">
+            <div class="focus-list-header">
+              <div style="font-weight:700; color:#b00020; font-size:14px; display:flex; align-items:center; gap:6px;">
+                <span>⚠️</span> Needs Attention
+                <span id="needs-attention-badge" style="font-size:11px; font-weight:700; color:#b00020; background:#fee2e2; padding:2px 8px; border-radius:99px;">0</span>
+              </div>
+              <span style="font-size:11px; color:#64748b;">Critical first, then Warning · Lowest score first</span>
+            </div>
+            <div id="needs-attention-list" class="focus-list-items"></div>
+          </div>
+        </div>
+
+        <!-- Student Table with Danger Zones Column -->
         <div id="table-container" class="table-container">
           <table>
             <thead>
               <tr>
-                <th style="min-width: 150px;">Student</th>
+                <th style="min-width: 140px;">Student</th>
+                <th style="min-width: 130px;">Danger zones</th>
                 <th>Quiz</th>
                 <th>Assignment</th>
                 <th>Mid</th>
@@ -751,7 +872,7 @@
                 <th>Final-Term</th>
                 <th>Total so far</th>
                 <th>Status</th>
-                <th style="min-width: 220px;">Why flagged</th>
+                <th style="min-width: 200px;">Why flagged</th>
               </tr>
             </thead>
             <tbody id="rows"></tbody>
@@ -1095,36 +1216,53 @@
           </form>
         </div>
 
-        <!-- 5. Danger Zone & Grading Rules Card (Full Width) -->
+        <!-- 5. Danger Zone Rules Card (Full Width) -->
         <div class="setup-card danger-card full-width">
           <div class="setup-card-title">
-            <span>⚠️ Danger Zone & Performance Standing Rules</span>
+            <span>⚠️ Configure Danger Zone Rules</span>
+            <span id="setup-rules-course-code" style="background:#fee2e2; color:#b91c1c; font-size:12px; font-weight:700; padding:2px 10px; border-radius:99px;">SE 331</span>
           </div>
           <div class="setup-card-subtitle" style="color:#991b1b;">
-            Deterministic risk classification and destructive course operations.
+            Customize danger limits per assessment group. Students with marks strictly below a limit are flagged into that danger zone.
           </div>
 
-          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; align-items:center;">
-            <div style="font-size:13px; color:#475569; line-height:1.6;">
-              <p style="margin:0 0 8px 0;"><strong>Active Policy Thresholds:</strong></p>
-              <ul style="margin:0; padding-left:18px;">
-                <li><strong>Critical Standing:</strong> Triggered when Student Attendance is below threshold (default 60%) <em>AND</em> at least one academic marks category is below threshold (default 40%).</li>
-                <li><strong>Warning Standing:</strong> Triggered when any individual component (attendance, quiz, assignment, presentation, or midterm) falls below threshold.</li>
-                <li><strong>OK Standing:</strong> All assessed categories are at or above passing threshold.</li>
+          <div id="rules-success-msg" class="alert-success" style="display:none;"></div>
+          <div id="rules-error-msg" class="alert-error" style="display:none;"></div>
+
+          <form id="form-danger-rules" onsubmit="submitDangerZoneRules(event)" novalidate>
+            <div class="form-row-3">
+              <div class="form-group">
+                <label for="rule-in-quiz">Quiz Danger Limit (marks)</label>
+                <input type="number" id="rule-in-quiz" step="0.5" min="0" required style="width:100%;">
+                <div style="font-size:11px; color:#64748b; margin-top:3px;">Plan Max: <span id="rule-max-quiz">15</span> marks</div>
+                <div class="field-error" id="rule-quiz-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="rule-in-midterm">Midterm Danger Limit (marks)</label>
+                <input type="number" id="rule-in-midterm" step="0.5" min="0" required style="width:100%;">
+                <div style="font-size:11px; color:#64748b; margin-top:3px;">Plan Max: <span id="rule-max-midterm">30</span> marks</div>
+                <div class="field-error" id="rule-midterm-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="rule-in-class">Class Performance Group Limit (marks)</label>
+                <input type="number" id="rule-in-class" step="0.5" min="0" required style="width:100%;">
+                <div style="font-size:11px; color:#64748b; margin-top:3px;">Group Max: <span id="rule-max-class">20</span> marks (Att+Ass+Pres)</div>
+                <div class="field-error" id="rule-class-error"></div>
+              </div>
+            </div>
+
+            <div style="background:#fff; border:1px solid #fecaca; border-radius:8px; padding:12px 16px; margin-bottom:14px; font-size:12px; color:#7f1d1d; line-height:1.5;">
+              <strong>Deterministic Classification Rules:</strong>
+              <ul style="margin:4px 0 0 0; padding-left:18px;">
+                <li><strong>Safe:</strong> 0 danger zones. All assessed categories are at or above danger limits.</li>
+                <li><strong>Warning:</strong> Exactly 1 danger zone triggered.</li>
+                <li><strong>Critical:</strong> 2 or more danger zones triggered.</li>
+                <li><em>Pending parts are treated as not assessed and never trigger danger. Final-Term pending is excluded.</em></li>
               </ul>
             </div>
 
-            <div style="background:#fff; border:1px solid #fecaca; border-radius:8px; padding:16px;">
-              <h5 style="margin:0 0 8px 0; color:#991b1b; font-size:13px;">Archiving & Deletion</h5>
-              <p style="margin:0 0 12px 0; font-size:12px; color:#64748b;">
-                Archived courses are hidden from the active roster but historical grade records remain preserved in the database.
-              </p>
-              <div style="display:flex; gap:8px;">
-                <button type="button" class="secondary-btn" style="border-color:#fca5a5; color:#991b1b; font-size:12px; padding:6px 12px;" onclick="alert('Course archiving will be available after term finalization.')">Archive Course</button>
-                <button type="button" class="secondary-btn" style="border-color:#fca5a5; color:#991b1b; font-size:12px; padding:6px 12px;" onclick="alert('Resetting course data requires Department Head authorization.')">Reset Data</button>
-              </div>
-            </div>
-          </div>
+            <button type="submit" class="primary-btn" id="btn-save-rules" style="background:#b91c1c; padding:10px 24px;">Save Danger Zone Rules</button>
+          </form>
         </div>
       </div>
     </div>
@@ -1157,6 +1295,17 @@
       <h4 style="margin:8px 0;color:#333;font-size:14px;">Component Standing</h4>
       <div class="comp-grid" id="det-components"></div>
 
+      <!-- Danger Zone Evaluation Section -->
+      <div style="margin-top:14px; margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:14px 16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+          <h4 style="margin:0; color:#1d3a8a; font-size:14px; display:flex; align-items:center; gap:6px;">
+            <span>⚠️</span> Danger Zone Evaluation
+          </h4>
+          <span id="det-danger-zones-summary" style="font-size:12px; font-weight:700;"></span>
+        </div>
+        <div class="danger-zone-grid" id="det-danger-zones"></div>
+      </div>
+
       <!-- What-if Final-Term Helper -->
       <div id="det-what-if" style="margin-bottom:14px;"></div>
 
@@ -1183,9 +1332,11 @@
   <script>
     // Chart.js instance tracking
     let doughnutChartInstance = null;
+    let dangerZoneChartInstance = null;
     let rankingChartInstance = null;
     let studentDetailChartInstance = null;
     let currentAssessmentPlan = null;
+    let currentDangerZoneRules = null;
 
     function getToken() {
       return localStorage.getItem("acadex_token");
@@ -1574,6 +1725,7 @@
 
       if (tabId === 'overview') {
         if (doughnutChartInstance) doughnutChartInstance.resize();
+        if (dangerZoneChartInstance) dangerZoneChartInstance.resize();
         if (rankingChartInstance) rankingChartInstance.resize();
       }
       if (tabId === 'marks') {
@@ -1581,6 +1733,7 @@
       }
       if (tabId === 'setup') {
         updateSetupCourseBadges();
+        loadDangerZoneRules();
       }
     }
 
@@ -1604,6 +1757,10 @@
       const planCode = document.getElementById("setup-plan-code");
       if (planCode && currentAssessmentPlan) {
         planCode.textContent = currentAssessmentPlan.course_code || "Active Plan";
+      }
+      const rulesCode = document.getElementById("setup-rules-course-code");
+      if (rulesCode && currentAssessmentPlan) {
+        rulesCode.textContent = currentAssessmentPlan.course_code || "Active Rules";
       }
     }
 
@@ -1900,6 +2057,148 @@
       }
     }
 
+    // --- Danger Zone Rules Loader and Handlers ---
+    async function loadDangerZoneRules() {
+      const courseId = document.getElementById("course").value;
+      if (!courseId) return;
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/danger-zone-rules`, {
+          headers: authHeaders()
+        });
+        if (res.status === 401) {
+          logout();
+          return;
+        }
+        if (!res.ok) return;
+
+        const data = await res.json();
+        currentDangerZoneRules = data;
+        renderDangerZoneRulesCard(data);
+      } catch (err) {
+        console.error("Failed to load danger zone rules:", err);
+      }
+    }
+
+    function renderDangerZoneRulesCard(data) {
+      const rulesCode = document.getElementById("setup-rules-course-code");
+      if (rulesCode && currentAssessmentPlan) {
+        rulesCode.textContent = currentAssessmentPlan.course_code || "Rules";
+      }
+
+      const qInp = document.getElementById("rule-in-quiz");
+      const mInp = document.getElementById("rule-in-midterm");
+      const cInp = document.getElementById("rule-in-class");
+
+      if (qInp && data.quiz_limit !== undefined) {
+        qInp.value = data.quiz_limit;
+        qInp.max = data.max_possible.quiz;
+        const maxQ = document.getElementById("rule-max-quiz");
+        if (maxQ) maxQ.textContent = data.max_possible.quiz;
+      }
+      if (mInp && data.midterm_limit !== undefined) {
+        mInp.value = data.midterm_limit;
+        mInp.max = data.max_possible.midterm;
+        const maxM = document.getElementById("rule-max-midterm");
+        if (maxM) maxM.textContent = data.max_possible.midterm;
+      }
+      if (cInp && data.class_limit !== undefined) {
+        cInp.value = data.class_limit;
+        cInp.max = data.max_possible.class;
+        const maxC = document.getElementById("rule-max-class");
+        if (maxC) maxC.textContent = data.max_possible.class;
+      }
+    }
+
+    async function submitDangerZoneRules(e) {
+      e.preventDefault();
+      document.getElementById("rules-success-msg").style.display = "none";
+      document.getElementById("rules-error-msg").style.display = "none";
+      document.getElementById("rule-quiz-error").textContent = "";
+      document.getElementById("rule-midterm-error").textContent = "";
+      document.getElementById("rule-class-error").textContent = "";
+
+      const courseId = document.getElementById("course").value;
+      const qValStr = document.getElementById("rule-in-quiz").value.trim();
+      const mValStr = document.getElementById("rule-in-midterm").value.trim();
+      const cValStr = document.getElementById("rule-in-class").value.trim();
+
+      const qVal = parseFloat(qValStr);
+      const mVal = parseFloat(mValStr);
+      const cVal = parseFloat(cValStr);
+
+      let clientError = false;
+      const maxPossible = currentDangerZoneRules ? currentDangerZoneRules.max_possible : { quiz: 15, midterm: 30, class: 20 };
+
+      if (isNaN(qVal) || qVal < 0) {
+        document.getElementById("rule-quiz-error").textContent = "Must be a non-negative number";
+        clientError = true;
+      } else if (qVal > maxPossible.quiz) {
+        document.getElementById("rule-quiz-error").textContent = `Cannot exceed plan max (${maxPossible.quiz})`;
+        clientError = true;
+      }
+
+      if (isNaN(mVal) || mVal < 0) {
+        document.getElementById("rule-midterm-error").textContent = "Must be a non-negative number";
+        clientError = true;
+      } else if (mVal > maxPossible.midterm) {
+        document.getElementById("rule-midterm-error").textContent = `Cannot exceed plan max (${maxPossible.midterm})`;
+        clientError = true;
+      }
+
+      if (isNaN(cVal) || cVal < 0) {
+        document.getElementById("rule-class-error").textContent = "Must be a non-negative number";
+        clientError = true;
+      } else if (cVal > maxPossible.class) {
+        document.getElementById("rule-class-error").textContent = `Cannot exceed group max (${maxPossible.class})`;
+        clientError = true;
+      }
+
+      if (clientError) return;
+
+      const btn = document.getElementById("btn-save-rules");
+      btn.disabled = true;
+      btn.textContent = "Saving...";
+
+      try {
+        const res = await fetch(`/api/courses/${courseId}/danger-zone-rules`, {
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify({
+            quiz_limit: qVal,
+            midterm_limit: mVal,
+            class_limit: cVal
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) {
+          const errBox = document.getElementById("rules-error-msg");
+          errBox.textContent = data.detail || "Failed to save danger zone rules.";
+          errBox.style.display = "block";
+          return;
+        }
+
+        const sBox = document.getElementById("rules-success-msg");
+        sBox.textContent = "Danger zone rules saved successfully!";
+        sBox.style.display = "block";
+
+        await loadDangerZoneRules();
+        await load();
+
+        setTimeout(() => {
+          sBox.style.display = "none";
+        }, 3500);
+      } catch (err) {
+        const errBox = document.getElementById("rules-error-msg");
+        errBox.textContent = "Network error while saving danger zone rules.";
+        errBox.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Save Danger Zone Rules";
+      }
+    }
+
     // Helper for table category cells
     function formatCell(comp) {
       if (!comp || comp.status === "pending") {
@@ -1916,6 +2215,71 @@
       return `<span class="cell-ok">${ob}/${mx} <small style="color:#64748b;font-weight:normal">(${pct})</small></span>`;
     }
 
+    // Helper to render Doing Well and Needs Attention lists
+    function renderFocusLists(d) {
+      const doingWell = d.doing_well || [];
+      const needsAttention = d.needs_attention || [];
+
+      // Doing Well Count and List
+      const dwBadge = document.getElementById("doing-well-badge");
+      if (dwBadge) dwBadge.textContent = doingWell.length;
+
+      const dwList = document.getElementById("doing-well-list");
+      if (dwList) {
+        if (doingWell.length === 0) {
+          dwList.innerHTML = `<div style="text-align:center; padding:24px; color:#94a3b8; font-size:13px;">No safe students currently</div>`;
+        } else {
+          dwList.innerHTML = doingWell.map(s => `
+            <div class="focus-student-item" onclick="openStudentDetail('${s.student_code}')" title="Click to inspect ${s.name}">
+              <div>
+                <strong>${s.name}</strong> <small style="color:#64748b;">(${s.student_code})</small>
+                <div style="font-size:11px; color:#475569; margin-top:2px;">
+                  Score so far: <strong style="color:#15803d;">${s.percentage_so_far}%</strong> (${s.total_obtained} / ${s.total_assessed_max})
+                </div>
+              </div>
+              <div style="text-align:right;">
+                <span class="badge safe">SAFE</span>
+              </div>
+            </div>
+          `).join("");
+        }
+      }
+
+      // Needs Attention Count and List
+      const naBadge = document.getElementById("needs-attention-badge");
+      if (naBadge) naBadge.textContent = needsAttention.length;
+
+      const naList = document.getElementById("needs-attention-list");
+      if (naList) {
+        if (needsAttention.length === 0) {
+          naList.innerHTML = `<div style="text-align:center; padding:24px; color:#15803d; font-size:13px; font-weight:600;">✓ All students are currently safe!</div>`;
+        } else {
+          naList.innerHTML = needsAttention.map(s => {
+            const badgePills = (s.danger_badges && s.danger_badges.length > 0)
+              ? s.danger_badges.map(b => `<span class="badge danger-pill">${b}</span>`).join(" ")
+              : '<span class="badge danger-pill">Below threshold</span>';
+
+            const scoreColor = s.level === 'critical' ? '#b00020' : '#b45309';
+            return `
+              <div class="focus-student-item ${s.level === 'critical' ? 'crit' : ''}" onclick="openStudentDetail('${s.student_code}')" title="Click to inspect ${s.name}">
+                <div>
+                  <strong>${s.name}</strong> <small style="color:#64748b;">(${s.student_code})</small>
+                  <div style="font-size:11px; color:#475569; margin-top:3px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                    <span>Score: <strong style="color:${scoreColor};">${s.percentage_so_far}%</strong></span>
+                    <span>·</span>
+                    <span>${badgePills}</span>
+                  </div>
+                </div>
+                <div style="text-align:right;">
+                  <span class="badge ${s.level}">${s.level.toUpperCase()}</span>
+                </div>
+              </div>
+            `;
+          }).join("");
+        }
+      }
+    }
+
     async function load() {
       const courseId = document.getElementById("course").value;
       if (!courseId) return;
@@ -1924,8 +2288,9 @@
       const mkVal = parseFloat(document.getElementById("mk").value) || 40;
       const flagVal = document.getElementById("flag").checked;
 
-      // Ensure plan card is loaded
+      // Ensure plan card and danger zone rules are loaded
       await loadAssessmentPlan();
+      await loadDangerZoneRules();
 
       const q = `attendance_threshold=${encodeURIComponent(attVal)}&marks_threshold=${encodeURIComponent(mkVal)}&only_flagged=${flagVal}`;
       
@@ -1947,27 +2312,30 @@
         if (d.summary) {
           document.getElementById("c1").textContent = d.summary.critical;
           document.getElementById("c2").textContent = d.summary.warning;
-          document.getElementById("c3").textContent = d.summary.ok;
+          document.getElementById("c3").textContent = d.summary.safe !== undefined ? d.summary.safe : d.summary.ok;
         } else {
           const n = l => d.students.filter(s => s.level === l).length;
           document.getElementById("c1").textContent = n("critical");
           document.getElementById("c2").textContent = n("warning");
-          document.getElementById("c3").textContent = n("ok");
+          document.getElementById("c3").textContent = n("safe") + n("ok");
         }
 
-        // 2. Render Course Level Charts (Doughnut & Ranking Bar)
+        // 2. Render Doing Well and Needs Attention Lists
+        renderFocusLists(d);
+
+        // 3. Render Course Level Charts (Doughnut, Danger Zone Bar, Ranking Bar)
         renderCourseCharts(d, mkVal);
 
-        // 3. Render Students Table
+        // 4. Render Students Table
         const rowsEl = document.getElementById("rows");
         const totalEnrolled = d.summary ? d.summary.total : (d.all_students ? d.all_students.length : d.students.length);
         if (totalEnrolled === 0) {
-          rowsEl.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:36px 16px;color:#64748b;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">👥</div><strong>No students enrolled yet</strong><div style="font-size:12px;color:#94a3b8;margin-top:4px;">Switch to the "Course Setup" tab above to enroll students into this course.</div></td></tr>`;
+          rowsEl.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:36px 16px;color:#64748b;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">👥</div><strong>No students enrolled yet</strong><div style="font-size:12px;color:#94a3b8;margin-top:4px;">Switch to the "Course Setup" tab above to enroll students into this course.</div></td></tr>`;
           return;
         }
 
         if (d.students.length === 0) {
-          rowsEl.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:24px;color:#888;">No students match criteria.</td></tr>`;
+          rowsEl.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:24px;color:#888;">No students match criteria.</td></tr>`;
           return;
         }
 
@@ -1980,11 +2348,19 @@
           const attCell = formatCell(c.attendance);
           const fCell = formatCell(c.final);
 
+          let dzCell = "";
+          if (s.danger_zones && s.danger_zones.length > 0) {
+            dzCell = (s.danger_badges || []).map(b => `<span class="badge danger-pill">${b}</span>`).join(" ");
+          } else {
+            dzCell = `<span style="color:#16a34a; font-weight:700; font-size:12px;">✓ None</span>`;
+          }
+
           const totalSoFar = `<strong>${s.total_obtained} / ${s.total_assessed_max}</strong> <div style="font-size:11px;color:#64748b;font-weight:600;">${s.percentage_so_far}%</div>`;
 
           return `
             <tr class="clickable-row" onclick="openStudentDetail('${s.student_code}')" title="Click to view full detail for ${s.name}">
               <td><strong>${s.name}</strong><br><small style="color:#64748b">${s.student_code}</small></td>
+              <td>${dzCell}</td>
               <td>${qCell}</td>
               <td>${aCell}</td>
               <td>${mCell}</td>
@@ -2040,12 +2416,13 @@
           }
         });
       } else {
+        const safeCount = d.summary.safe !== undefined ? d.summary.safe : d.summary.ok;
         doughnutChartInstance = new Chart(doughnutCtx, {
           type: "doughnut",
           data: {
-            labels: ["Critical", "Warning", "OK"],
+            labels: ["Critical", "Warning", "Safe"],
             datasets: [{
-              data: [d.summary.critical, d.summary.warning, d.summary.ok],
+              data: [d.summary.critical, d.summary.warning, safeCount],
               backgroundColor: ["#b00020", "#d97706", "#16a34a"],
               hoverBackgroundColor: ["#900018", "#b45309", "#15803d"],
               borderWidth: 2,
@@ -2070,7 +2447,62 @@
         });
       }
 
-      // 2) Horizontal Bar Chart Ranking All Students
+      // 2) Danger Zone Bar Chart (Students per danger zone)
+      if (dangerZoneChartInstance) {
+        dangerZoneChartInstance.destroy();
+      }
+      const dzCtx = document.getElementById("dangerZoneChart").getContext("2d");
+      const dzCounts = d.danger_zone_counts || { quiz: 0, midterm: 0, class_perf: 0 };
+      const qLim = currentDangerZoneRules ? currentDangerZoneRules.quiz_limit : 10;
+      const mLim = currentDangerZoneRules ? currentDangerZoneRules.midterm_limit : 15;
+      const cLim = currentDangerZoneRules ? currentDangerZoneRules.class_limit : 15;
+
+      const dangerLabels = [
+        `Quiz (<${qLim})`,
+        `Midterm (<${mLim})`,
+        `Class Perf (<${cLim})`
+      ];
+      const dangerData = [dzCounts.quiz || 0, dzCounts.midterm || 0, dzCounts.class_perf || 0];
+
+      dangerZoneChartInstance = new Chart(dzCtx, {
+        type: "bar",
+        data: {
+          labels: dangerLabels,
+          datasets: [{
+            label: "Students in Danger",
+            data: dangerData,
+            backgroundColor: ["#ef4444", "#f97316", "#dc2626"],
+            borderColor: ["#b91c1c", "#c2410c", "#991b1b"],
+            borderWidth: 1.5,
+            borderRadius: 4,
+            maxBarThickness: 36
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { precision: 0, stepSize: 1 },
+              grid: { color: "#f1f5f9" }
+            },
+            x: {
+              grid: { display: false }
+            }
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => ` ${ctx.raw} student${ctx.raw === 1 ? '' : 's'} in danger`
+              }
+            }
+          }
+        }
+      });
+
+      // 3) Horizontal Bar Chart Ranking All Students
       if (rankingChartInstance) {
         rankingChartInstance.destroy();
       }
@@ -2243,6 +2675,61 @@
       document.getElementById("det-overall").textContent = `Score so far: ${totalOb} / ${totalAssessed} (${d.percentage_so_far}%)`;
 
       renderStudentDetailChart(d, marksThreshold);
+
+      // Render Danger Zone Evaluation in Modal
+      const activeDzCount = (d.danger_zones || []).length;
+      const dzSummaryEl = document.getElementById("det-danger-zones-summary");
+      if (dzSummaryEl) {
+        if (activeDzCount === 0) {
+          dzSummaryEl.innerHTML = `<span style="color:#15803d; background:#dcfce7; padding:3px 10px; border-radius:99px;">✓ Safe · 0 active danger zones</span>`;
+        } else if (activeDzCount === 1) {
+          dzSummaryEl.innerHTML = `<span style="color:#b45309; background:#fef3c7; padding:3px 10px; border-radius:99px;">⚠️ Warning · 1 active danger zone</span>`;
+        } else {
+          dzSummaryEl.innerHTML = `<span style="color:#b00020; background:#fee2e2; padding:3px 10px; border-radius:99px;">🚨 Critical · ${activeDzCount} active danger zones</span>`;
+        }
+      }
+
+      const zones = d.zones || {};
+      const dzContainer = document.getElementById("det-danger-zones");
+      if (dzContainer) {
+        const qz = zones.quiz || { obtained: 0, limit: 10, max_marks: 15, in_danger: false, status: "pending" };
+        const mz = zones.midterm || { obtained: 0, limit: 15, max_marks: 30, in_danger: false, status: "pending" };
+        const cz = zones.class_perf || { obtained: 0, limit: 15, max: 20, in_danger: false, status: "pending", breakdown: {} };
+
+        function makeZoneCard(title, zData, maxM, subtext = "") {
+          const isPending = zData.status === "pending";
+          const inDanger = !isPending && (zData.in_danger || zData.is_danger);
+          const cardClass = isPending ? "danger-zone-card" : (inDanger ? "danger-zone-card in-danger" : "danger-zone-card is-safe");
+
+          let statusBadge = "";
+          if (isPending) {
+            statusBadge = `<span class="badge" style="background:#f1f5f9; color:#64748b;">Not assessed</span>`;
+          } else if (inDanger) {
+            statusBadge = `<span class="badge danger-pill">⚠️ Danger (&lt; ${zData.limit})</span>`;
+          } else {
+            statusBadge = `<span class="badge safe-pill">✓ Safe (&ge; ${zData.limit})</span>`;
+          }
+
+          const obVal = isPending ? "Pending" : `${zData.obtained} / ${maxM}`;
+          return `
+            <div class="${cardClass}">
+              <div style="font-size:11px; text-transform:uppercase; font-weight:700; color:#64748b; margin-bottom:4px;">${title}</div>
+              <div style="font-size:16px; font-weight:700; color:#1e293b; margin-bottom:2px;">${obVal}</div>
+              <div style="font-size:11px; color:#64748b; margin-bottom:6px;">Danger Limit: &lt; <strong>${zData.limit}</strong></div>
+              ${subtext ? `<div style="font-size:10px; color:#64748b; margin-bottom:6px;">${subtext}</div>` : ''}
+              <div>${statusBadge}</div>
+            </div>
+          `;
+        }
+
+        const classBreakdown = cz.breakdown ? `Att: ${cz.breakdown.attendance?.obtained ?? '-'} · Ass: ${cz.breakdown.assignment?.obtained ?? '-'} · Pres: ${cz.breakdown.presentation?.obtained ?? '-'}` : '';
+
+        dzContainer.innerHTML = 
+          makeZoneCard("Quiz Zone", qz, qz.max_marks || 15) +
+          makeZoneCard("Midterm Zone", mz, mz.max_marks || 30) +
+          makeZoneCard("Class Performance Group", cz, cz.max || 20, classBreakdown);
+      }
+
       renderWhatIf(d.what_if);
 
       const comps = [

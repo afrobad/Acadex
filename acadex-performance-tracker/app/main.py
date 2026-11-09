@@ -119,6 +119,15 @@ def create_course(
             max_marks=max_m
         ))
 
+    # Automatically create the default DangerZoneRule:
+    # quiz 10.0, midterm 15.0, class_perf 15.0
+    db.add(m.DangerZoneRule(
+        course_id=course.id,
+        quiz_limit=10.0,
+        midterm_limit=15.0,
+        class_limit=15.0
+    ))
+
     db.commit()
     db.refresh(course)
     return course
@@ -182,18 +191,39 @@ def warnings(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
 
     all_rows = compute_warnings(db, course_id, attendance_threshold, marks_threshold)
+    safe_count = sum(1 for r in all_rows if r["level"] in ("safe", "ok"))
+    crit_count = sum(1 for r in all_rows if r["level"] == "critical")
+    warn_count = sum(1 for r in all_rows if r["level"] == "warning")
     summary = {
-        "critical": sum(1 for r in all_rows if r["level"] == "critical"),
-        "warning": sum(1 for r in all_rows if r["level"] == "warning"),
-        "ok": sum(1 for r in all_rows if r["level"] == "ok"),
+        "critical": crit_count,
+        "warning": warn_count,
+        "safe": safe_count,
+        "ok": safe_count,
         "total": len(all_rows),
     }
-    display_rows = [r for r in all_rows if r["level"] != "ok"] if only_flagged else all_rows
+
+    danger_zone_counts = {
+        "quiz": sum(1 for r in all_rows if "quiz" in r.get("danger_zones", [])),
+        "midterm": sum(1 for r in all_rows if "midterm" in r.get("danger_zones", [])),
+        "class_perf": sum(1 for r in all_rows if "class_perf" in r.get("danger_zones", [])),
+    }
+
+    safe_students = [r for r in all_rows if r["level"] in ("safe", "ok")]
+    doing_well = sorted(safe_students, key=lambda s: s.get("percentage_so_far", 0.0), reverse=True)
+
+    critical_students = sorted([r for r in all_rows if r["level"] == "critical"], key=lambda s: s.get("percentage_so_far", 0.0))
+    warning_students = sorted([r for r in all_rows if r["level"] == "warning"], key=lambda s: s.get("percentage_so_far", 0.0))
+    needs_attention = critical_students + warning_students
+
+    display_rows = [r for r in all_rows if r["level"] not in ("safe", "ok")] if only_flagged else all_rows
     return {
         "course": course.code,
         "attendance_threshold": attendance_threshold,
         "marks_threshold": marks_threshold,
         "summary": summary,
+        "danger_zone_counts": danger_zone_counts,
+        "doing_well": doing_well,
+        "needs_attention": needs_attention,
         "students": display_rows,
         "all_students": all_rows
     }
@@ -407,6 +437,108 @@ def update_assessment_plan(
         "course_code": course.code,
         "items": items,
         "total_max_marks": total
+    }
+
+@app.get("/api/courses/{course_id}/danger-zone-rules", response_model=s.DangerZoneRuleOut)
+def get_danger_zone_rules(
+    course_id: int,
+    current_user: m.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    course = db.get(m.Course, course_id)
+    if not course or course.faculty_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    rule = db.query(m.DangerZoneRule).filter_by(course_id=course_id).first()
+    if not rule:
+        rule = m.DangerZoneRule(
+            course_id=course.id,
+            quiz_limit=10.0,
+            midterm_limit=15.0,
+            class_limit=15.0
+        )
+        db.add(rule)
+        db.commit()
+        db.refresh(rule)
+
+    plans = db.query(m.AssessmentPlan).filter_by(course_id=course_id).all()
+    plan_map = {p.category.lower(): p.max_marks for p in plans}
+    quiz_max = plan_map.get("quiz", 15.0)
+    midterm_max = plan_map.get("midterm", 30.0)
+    class_max = plan_map.get("attendance", 7.0) + plan_map.get("assignment", 5.0) + plan_map.get("presentation", 8.0)
+
+    return {
+        "course_id": course.id,
+        "quiz_limit": rule.quiz_limit,
+        "midterm_limit": rule.midterm_limit,
+        "class_limit": rule.class_limit,
+        "max_possible": {
+            "quiz": quiz_max,
+            "midterm": midterm_max,
+            "class": class_max
+        }
+    }
+
+@app.put("/api/courses/{course_id}/danger-zone-rules", response_model=s.DangerZoneRuleOut)
+def update_danger_zone_rules(
+    course_id: int,
+    payload: s.DangerZoneRuleUpdate,
+    current_user: m.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    course = db.get(m.Course, course_id)
+    if not course or course.faculty_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    plans = db.query(m.AssessmentPlan).filter_by(course_id=course_id).all()
+    plan_map = {p.category.lower(): p.max_marks for p in plans}
+    quiz_max = plan_map.get("quiz", 15.0)
+    midterm_max = plan_map.get("midterm", 30.0)
+    class_max = plan_map.get("attendance", 7.0) + plan_map.get("assignment", 5.0) + plan_map.get("presentation", 8.0)
+
+    if payload.quiz_limit < 0 or payload.quiz_limit > quiz_max:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Quiz limit must be between 0 and {quiz_max} (plan max)."
+        )
+    if payload.midterm_limit < 0 or payload.midterm_limit > midterm_max:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Midterm limit must be between 0 and {midterm_max} (plan max)."
+        )
+    if payload.class_limit < 0 or payload.class_limit > class_max:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Class performance limit must be between 0 and {class_max} (combined attendance + assignment + presentation plan max)."
+        )
+
+    rule = db.query(m.DangerZoneRule).filter_by(course_id=course_id).first()
+    if not rule:
+        rule = m.DangerZoneRule(
+            course_id=course.id,
+            quiz_limit=payload.quiz_limit,
+            midterm_limit=payload.midterm_limit,
+            class_limit=payload.class_limit
+        )
+        db.add(rule)
+    else:
+        rule.quiz_limit = payload.quiz_limit
+        rule.midterm_limit = payload.midterm_limit
+        rule.class_limit = payload.class_limit
+
+    db.commit()
+    db.refresh(rule)
+
+    return {
+        "course_id": course.id,
+        "quiz_limit": rule.quiz_limit,
+        "midterm_limit": rule.midterm_limit,
+        "class_limit": rule.class_limit,
+        "max_possible": {
+            "quiz": quiz_max,
+            "midterm": midterm_max,
+            "class": class_max
+        }
     }
 
 @app.get("/api/courses/{course_id}/marks/grid")

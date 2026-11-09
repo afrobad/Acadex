@@ -27,7 +27,7 @@ def _fmt_max(val: float) -> str:
 def compute_student_detail(db: Session, course_id: int, student: m.Student,
                            attendance_threshold: float = 60.0,
                            marks_threshold: float = 40.0):
-    """Compute detailed performance metrics using the course Assessment Plan."""
+    """Compute detailed performance metrics using the course Assessment Plan and Danger Zone Rules."""
     # 1. Load course Assessment Plan (with fallback defaults if unconfigured)
     plans = db.query(m.AssessmentPlan).filter_by(course_id=course_id).all()
     default_plan = {
@@ -83,9 +83,9 @@ def compute_student_detail(db: Session, course_id: int, student: m.Student,
         quiz_obtained = 0.0
         quiz_status = "pending"
     else:
-        quiz_pcts = [round(mk.obtained / mk.total * 100, 1) for mk in quiz_marks]
-        quiz_pct = round(sum(quiz_pcts) / len(quiz_pcts), 1)
-        quiz_obtained = round(quiz_pct / 100.0 * quiz_max, 2)
+        quiz_raw_ratio = sum(mk.obtained / mk.total for mk in quiz_marks) / len(quiz_marks)
+        quiz_pct = round(quiz_raw_ratio * 100, 1)
+        quiz_obtained = round(quiz_raw_ratio * quiz_max, 2)
         quiz_status = "low" if quiz_pct < marks_threshold else "ok"
 
     components["quiz"] = {
@@ -108,8 +108,9 @@ def compute_student_detail(db: Session, course_id: int, student: m.Student,
         else:
             tot_ob = sum(mk.obtained for mk in cat_marks)
             tot_pos = sum(mk.total for mk in cat_marks)
-            cat_pct = round(tot_ob / tot_pos * 100, 1) if tot_pos else 0.0
-            cat_obtained = round(cat_pct / 100.0 * cat_max, 2)
+            cat_ratio = tot_ob / tot_pos if tot_pos else 0.0
+            cat_pct = round(cat_ratio * 100, 1)
+            cat_obtained = round(cat_ratio * cat_max, 2)
             cat_status = "low" if cat_pct < marks_threshold else "ok"
 
         components[cat] = {
@@ -147,43 +148,103 @@ def compute_student_detail(db: Session, course_id: int, student: m.Student,
         for mk in marks
     ]
 
-    # 4. Warnings & Readable Deficit Reasons
-    display_names = {
-        "attendance": "Attendance",
-        "quiz": "Quiz",
-        "assignment": "Assignment",
-        "presentation": "Presentation",
-        "midterm": "Midterm",
-        "final": "Final",
-    }
+    # 4. Danger Zone Evaluation (Deterministic Python rules)
+    rule = db.query(m.DangerZoneRule).filter_by(course_id=course_id).first()
+    quiz_limit = rule.quiz_limit if rule else 10.0
+    midterm_limit = rule.midterm_limit if rule else 15.0
+    class_limit = rule.class_limit if rule else 15.0
 
+    # Zone 1: Quiz (total quiz marks scaled to plan's quiz max below quiz_limit is danger)
+    quiz_comp = components["quiz"]
+    quiz_assessed = (quiz_comp["status"] != "pending")
+    quiz_in_danger = quiz_assessed and (quiz_comp["obtained_marks"] < quiz_limit)
+
+    # Zone 2: Midterm (midterm marks scaled to plan max below midterm_limit is danger)
+    midterm_comp = components["midterm"]
+    midterm_assessed = (midterm_comp["status"] != "pending")
+    midterm_in_danger = midterm_assessed and (midterm_comp["obtained_marks"] < midterm_limit)
+
+    # Zone 3: Class performance group (attendance + assignment + presentation combined below class_limit is danger)
+    class_cats = ["attendance", "assignment", "presentation"]
+    class_assessed = any(components[k]["status"] != "pending" for k in class_cats)
+    class_obtained = round(sum(components[k]["obtained_marks"] for k in class_cats), 2)
+    class_max = round(sum(components[k]["max_marks"] for k in class_cats), 2)
+    class_in_danger = class_assessed and (class_obtained < class_limit)
+
+    active_danger_zones = []
     reasons = []
-    # Check attendance
-    if components["attendance"]["status"] == "low":
-        c = components["attendance"]
+
+    if quiz_in_danger:
+        active_danger_zones.append("quiz")
         reasons.append(
-            f"Attendance {_fmt_score(c['obtained_marks'])}/{_fmt_max(c['max_marks'])} ({_format_pct(c['percentage'])}) is below {_format_pct(attendance_threshold)}"
+            f"Quiz {_fmt_score(quiz_comp['obtained_marks'])}/{_fmt_max(quiz_comp['max_marks'])} is below the danger limit {_fmt_score(quiz_limit)}"
         )
 
-    # Check marks categories
-    for cat in ["quiz", "assignment", "presentation", "midterm", "final"]:
-        c = components[cat]
-        if c["status"] == "low":
-            disp = display_names.get(cat, cat.capitalize())
-            reasons.append(
-                f"{disp} {_fmt_score(c['obtained_marks'])}/{_fmt_max(c['max_marks'])} ({_format_pct(c['percentage'])}) is below {_format_pct(marks_threshold)}"
-            )
+    if midterm_in_danger:
+        active_danger_zones.append("midterm")
+        reasons.append(
+            f"Midterm {_fmt_score(midterm_comp['obtained_marks'])}/{_fmt_max(midterm_comp['max_marks'])} is below the danger limit {_fmt_score(midterm_limit)}"
+        )
 
-    # Determine risk levels (pending categories are ignored)
-    low_att = (components["attendance"]["status"] == "low")
-    marks_low = any(components[k]["status"] == "low" for k in ["quiz", "assignment", "presentation", "midterm", "final"])
+    if class_in_danger:
+        active_danger_zones.append("class_perf")
+        reasons.append(
+            f"Class performance {_fmt_score(class_obtained)}/{_fmt_max(class_max)} is below the danger limit {_fmt_score(class_limit)}"
+        )
 
-    if low_att and marks_low:
+    # Status per student: no danger zones = Safe, one danger zone = Warning, two or more = Critical
+    if len(active_danger_zones) >= 2:
         level = "critical"
-    elif low_att or marks_low:
+    elif len(active_danger_zones) == 1:
         level = "warning"
     else:
-        level = "ok"
+        level = "safe"
+
+    zones = {
+        "quiz": {
+            "name": "Quiz",
+            "obtained": quiz_comp["obtained_marks"],
+            "max": quiz_comp["max_marks"],
+            "limit": quiz_limit,
+            "in_danger": quiz_in_danger,
+            "status": quiz_comp["status"],
+            "badge_text": f"Quiz {_fmt_score(quiz_comp['obtained_marks'])}/{_fmt_score(quiz_limit)}"
+        },
+        "midterm": {
+            "name": "Midterm",
+            "obtained": midterm_comp["obtained_marks"],
+            "max": midterm_comp["max_marks"],
+            "limit": midterm_limit,
+            "in_danger": midterm_in_danger,
+            "status": midterm_comp["status"],
+            "badge_text": f"Mid {_fmt_score(midterm_comp['obtained_marks'])}/{_fmt_score(midterm_limit)}"
+        },
+        "class_perf": {
+            "name": "Class Performance",
+            "obtained": class_obtained,
+            "max": class_max,
+            "limit": class_limit,
+            "in_danger": class_in_danger,
+            "status": "assessed" if class_assessed else "pending",
+            "badge_text": f"Class {_fmt_score(class_obtained)}/{_fmt_score(class_limit)}",
+            "breakdown": {
+                "attendance": {
+                    "obtained": components["attendance"]["obtained_marks"],
+                    "max": components["attendance"]["max_marks"]
+                },
+                "assignment": {
+                    "obtained": components["assignment"]["obtained_marks"],
+                    "max": components["assignment"]["max_marks"]
+                },
+                "presentation": {
+                    "obtained": components["presentation"]["obtained_marks"],
+                    "max": components["presentation"]["max_marks"]
+                }
+            }
+        }
+    }
+
+    danger_badges = [zones[z]["badge_text"] for z in active_danger_zones]
 
     # 5. "What-if" Final-Term Helper (Advisory Estimate)
     # Target: reach 40% of the total plan marks
@@ -248,6 +309,10 @@ def compute_student_detail(db: Session, course_id: int, student: m.Student,
         "assessments": assessments,
         "components": components,
         "level": level,
+        "status": level,
+        "danger_zones": active_danger_zones,
+        "danger_badges": danger_badges,
+        "zones": zones,
         "reasons": reasons,
         "what_if": what_if,
     }
@@ -272,11 +337,15 @@ def compute_warnings(db: Session, course_id: int,
             "total_plan_max": detail["total_plan_max"],
             "percentage_so_far": detail["percentage_so_far"],
             "level": detail["level"],
+            "status": detail["status"],
+            "danger_zones": detail["danger_zones"],
+            "danger_badges": detail["danger_badges"],
+            "zones": detail["zones"],
             "reasons": detail["reasons"],
             "components": detail["components"],
             "what_if": detail["what_if"],
         })
 
-    order = {"critical": 0, "warning": 1, "ok": 2}
-    results.sort(key=lambda r: (order[r["level"]], r["name"]))
+    order = {"critical": 0, "warning": 1, "safe": 2, "ok": 2}
+    results.sort(key=lambda r: (order.get(r["level"], 2), r["name"]))
     return results
