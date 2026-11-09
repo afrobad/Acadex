@@ -8,108 +8,147 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
   <style>
     * { box-sizing: border-box; }
-    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; background: #f4f6fb; color: #1c2333; }
-    header { background: #1d3a8a; color: #fff; padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
-    header h2 { margin: 0; font-size: 20px; font-weight: 600; }
-    .header-user { display: flex; align-items: center; gap: 14px; font-size: 13px; }
-    .user-pill { background: rgba(255,255,255,0.15); padding: 5px 12px; border-radius: 99px; }
-    .btn-logout { background: #fff; color: #1d3a8a; border: none; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
-    .btn-logout:hover { background: #e0e7ff; }
-
-    /* Two-Column Dashboard Layout */
-    main.dashboard-layout {
-      max-width: 1440px;
-      margin: 20px auto;
-      padding: 0 16px;
-      display: grid;
-      grid-template-columns: 320px minmax(0, 1fr);
-      gap: 20px;
-      align-items: start;
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      background: #f4f6fb;
+      color: #1c2333;
+      min-width: 900px;
     }
 
-    /* Left Column: Fixed-width (320px), sticky, independently scrolling sidebar */
-    .sidebar {
-      width: 320px;
-      position: sticky;
-      top: 20px;
-      max-height: calc(100vh - 40px);
-      overflow-y: auto;
-      overflow-x: hidden;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      padding-right: 4px;
-    }
-    .sidebar::-webkit-scrollbar {
-      width: 6px;
-    }
-    .sidebar::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
-
-    /* Accordion Section */
-    .accordion-section {
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-      border: 1px solid #e2e8f0;
-      overflow: hidden;
-    }
-    .accordion-header {
-      width: 100%;
-      background: #fff;
-      border: none;
-      padding: 12px 16px;
+    /* Header Bar */
+    header {
+      background: #1d3a8a;
+      color: #fff;
+      padding: 14px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 700;
-      color: #1d3a8a;
-      text-align: left;
-      transition: background 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    .accordion-header:hover {
+    header h2 { margin: 0; font-size: 20px; font-weight: 700; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+    .header-user { display: flex; align-items: center; gap: 14px; font-size: 13px; }
+    .user-pill { background: rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 99px; font-weight: 500; }
+    .btn-logout { background: #fff; color: #1d3a8a; border: none; padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+    .btn-logout:hover { background: #e0e7ff; }
+
+    /* Top Navigation Tabs & Shared Course Bar */
+    .top-nav-bar {
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+    }
+    .nav-tab {
+      background: transparent;
+      border: none;
+      border-bottom: 3px solid transparent;
+      padding: 15px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .nav-tab:hover {
+      color: #1d3a8a;
       background: #f8fafc;
     }
-    .accordion-header .acc-icon {
-      font-size: 11px;
-      color: #64748b;
-      font-weight: 700;
-      transition: transform 0.2s;
+    .nav-tab.active {
+      color: #1d3a8a;
+      border-bottom-color: #1d3a8a;
+      background: #fff;
     }
-    .accordion-body {
-      padding: 14px 16px;
-      border-top: 1px solid #f1f5f9;
+    .global-course-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+    }
+    .global-course-bar label {
+      margin-bottom: 0;
+      font-size: 12px;
+      color: #475569;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .global-course-bar select {
+      font-weight: 600;
+      color: #1d3a8a;
+      background: #f8fafc;
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 7px 14px;
+      min-width: 260px;
+      font-size: 13px;
+    }
+    .global-course-bar select:focus {
+      outline: none;
+      border-color: #1d3a8a;
     }
 
-    /* Form Fields in Sidebar */
+    /* Main Container for Tab Contents */
+    main.tab-content-container {
+      max-width: 1440px;
+      margin: 20px auto;
+      padding: 0 24px;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Form & Input Styles */
     .form-group {
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .form-row-2 {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 8px;
+      gap: 12px;
+    }
+    .form-row-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
     }
     .plan-inputs-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 10px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 14px;
     }
-    label { font-size: 11px; display: block; color: #555; margin-bottom: 3px; font-weight: 600; }
-    input, select, button { padding: 8px 10px; border: 1px solid #ccd; border-radius: 6px; font-size: 13px; }
-    input:focus, select:focus { outline: none; border-color: #1d3a8a; }
-    button.primary-btn { background: #1d3a8a; color: #fff; border: none; cursor: pointer; font-weight: 600; padding: 8px 14px; }
+    label { font-size: 12px; display: block; color: #475569; margin-bottom: 4px; font-weight: 600; }
+    input, select, button { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; font-family: inherit; }
+    input:focus, select:focus { outline: none; border-color: #1d3a8a; box-shadow: 0 0 0 2px rgba(29,58,138,0.1); }
+    button.primary-btn { background: #1d3a8a; color: #fff; border: none; cursor: pointer; font-weight: 600; padding: 9px 16px; border-radius: 6px; transition: background 0.15s; }
     button.primary-btn:hover { background: #162d6b; }
-    
+    button.secondary-btn { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; cursor: pointer; font-weight: 600; padding: 9px 16px; border-radius: 6px; }
+    button.secondary-btn:hover { background: #e2e8f0; }
+
     .field-error {
       color: #b00020;
       font-size: 11px;
-      margin-top: 2px;
+      margin-top: 3px;
       min-height: 15px;
     }
     input.invalid, select.invalid {
@@ -120,57 +159,76 @@
       background: #dff5e3;
       color: #176b2c;
       border: 1px solid #c3e6cb;
-      padding: 7px 10px;
+      padding: 10px 14px;
       border-radius: 6px;
-      font-size: 12px;
-      margin-bottom: 10px;
+      font-size: 13px;
+      margin-bottom: 14px;
     }
     .alert-error {
       background: #fde2e2;
       color: #b00020;
       border: 1px solid #f9bcbc;
-      padding: 8px 12px;
+      padding: 10px 14px;
       border-radius: 6px;
-      font-size: 12px;
-      margin-bottom: 12px;
+      font-size: 13px;
+      margin-bottom: 14px;
     }
 
-    /* Right Column: Main Area */
-    .main-content {
-      min-width: 0;
+    /* TAB 1: OVERVIEW STYLES */
+    .overview-layout {
       display: flex;
       flex-direction: column;
       gap: 16px;
     }
 
-    .bar { display: flex; gap: 14px; flex-wrap: wrap; align-items: end; background: #fff; padding: 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .search-bar { display: flex; gap: 10px; align-items: center; background: #fff; padding: 12px 16px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    
-    .cards { display: flex; gap: 12px; }
-    .card { flex: 1; background: #fff; padding: 14px; border-radius: 10px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .card b { font-size: 28px; display: block; margin-bottom: 4px; }
-    .card.crit b { color: #b00020; }
-    .card.warn b { color: #8a5a00; }
-    .card.ok b { color: #176b2c; }
-
-    /* Assessment Plan Card Styles */
-    .assessment-plan-card {
+    .bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: end;
       background: #fff;
       padding: 16px 20px;
       border-radius: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+    }
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: #fff;
+      padding: 14px 20px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+    }
+    
+    .cards { display: flex; gap: 14px; }
+    .card { flex: 1; background: #fff; padding: 16px; border-radius: 10px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    .card b { font-size: 32px; display: block; margin-bottom: 4px; font-weight: 700; }
+    .card.crit b { color: #b00020; }
+    .card.warn b { color: #b45309; }
+    .card.ok b { color: #15803d; }
+
+    /* Assessment Plan Card Styles */
+    .assessment-plan-card {
+      background: #fff;
+      padding: 18px 22px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
     }
     .plan-chip-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(105px, 1fr));
-      gap: 10px;
-      margin-top: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      margin-top: 14px;
     }
     .plan-chip {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
-      padding: 10px 8px;
+      padding: 12px 10px;
       text-align: center;
     }
     .plan-chip-title {
@@ -178,22 +236,23 @@
       text-transform: uppercase;
       font-weight: 700;
       color: #64748b;
-      margin-bottom: 2px;
+      margin-bottom: 4px;
     }
     .plan-chip-val {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 700;
       color: #1d3a8a;
     }
     .plan-chip-sub {
       font-size: 10px;
       color: #94a3b8;
+      margin-top: 2px;
     }
     .badge-pending {
       color: #64748b;
       background: #f1f5f9;
       border: 1px solid #e2e8f0;
-      padding: 2px 8px;
+      padding: 3px 8px;
       border-radius: 4px;
       font-size: 11px;
       font-weight: 600;
@@ -216,17 +275,18 @@
     }
     .chart-box {
       background: #fff;
-      padding: 16px;
+      padding: 18px;
       border-radius: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
       display: flex;
       flex-direction: column;
     }
     .chart-title {
-      font-size: 13px;
+      font-size: 14px;
       font-weight: 700;
       color: #1d3a8a;
-      margin: 0 0 10px 0;
+      margin: 0 0 12px 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -247,12 +307,13 @@
       background: #fafbfc;
     }
 
-    /* Table container & responsive styling */
+    /* Table Container */
     .table-container {
       overflow-x: auto;
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
     }
     table {
       width: 100%;
@@ -261,29 +322,121 @@
       background: #fff;
     }
     th, td {
-      padding: 10px 12px;
+      padding: 11px 14px;
       text-align: left;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #f1f5f9;
       font-size: 13px;
     }
     th {
       background: #f8fafc;
       font-weight: 600;
       color: #334155;
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.3px;
+      letter-spacing: 0.4px;
     }
     tbody tr.clickable-row { cursor: pointer; transition: background 0.15s; }
     tbody tr.clickable-row:hover { background: #f0f4ff; }
 
-    .badge { padding: 3px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
+    .badge { padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; }
     .critical { background: #fde2e2; color: #b00020; }
     .warning { background: #fff1d6; color: #8a5a00; }
     .ok { background: #dff5e3; color: #176b2c; }
     ul { margin: 0; padding-left: 16px; }
     li { margin-bottom: 2px; }
-    .empty-state { text-align: center; padding: 32px; color: #666; font-size: 14px; background: #fff; border-radius: 10px; }
+    .empty-state { text-align: center; padding: 40px; color: #64748b; font-size: 14px; background: #fff; border-radius: 10px; }
+
+    /* TAB 4: COURSE SETUP STYLES (Full-width, normal cards) */
+    .setup-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 20px;
+      align-items: start;
+    }
+    .setup-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 24px;
+    }
+    .setup-card.full-width {
+      grid-column: 1 / -1;
+    }
+    .setup-card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #1d3a8a;
+      margin: 0 0 4px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .setup-card-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0 0 18px 0;
+    }
+    .danger-card {
+      border: 1.5px solid #fecaca;
+      background: #fffafa;
+    }
+    .danger-card .setup-card-title {
+      color: #b91c1c;
+    }
+
+    /* TAB 2 & 3: SPREADSHEET & UPLOAD STYLES */
+    .placeholder-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      padding: 28px;
+    }
+    .spreadsheet-mock-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 16px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+    }
+    .spreadsheet-mock-table th {
+      background: #f1f5f9;
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #475569;
+      padding: 10px 8px;
+      border: 1px solid #e2e8f0;
+      text-align: center;
+    }
+    .spreadsheet-mock-table td {
+      border: 1px solid #e2e8f0;
+      padding: 8px 10px;
+      font-size: 13px;
+      text-align: center;
+    }
+    .spreadsheet-mock-table input {
+      width: 100%;
+      max-width: 70px;
+      text-align: center;
+      padding: 5px;
+      font-weight: 600;
+    }
+
+    .upload-dropzone {
+      border: 2px dashed #94a3b8;
+      border-radius: 12px;
+      padding: 48px 24px;
+      text-align: center;
+      background: #f8fafc;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 16px;
+    }
+    .upload-dropzone:hover {
+      border-color: #1d3a8a;
+      background: #f0f4ff;
+    }
 
     /* Modal / Detail Panel */
     .modal-overlay {
@@ -299,7 +452,7 @@
     .modal-card {
       background: #fff;
       border-radius: 12px;
-      max-width: 800px;
+      max-width: 820px;
       width: 100%;
       max-height: 90vh;
       overflow-y: auto;
@@ -359,44 +512,338 @@
     }
     .detail-table th { background: #f8fafc; font-size: 12px; }
 
-    /* Responsive Breakpoint: On screens < 900px, sidebar moves above main area */
-    @media (max-width: 900px) {
-      main.dashboard-layout {
-        grid-template-columns: 1fr;
-      }
-      .sidebar {
-        width: 100%;
-        position: static;
-        max-height: none;
-        overflow-y: visible;
-        padding-right: 0;
-      }
+    /* Responsive Breakpoints */
+    @media (max-width: 1080px) {
       .charts-row {
         grid-template-columns: 1fr;
+      }
+      .setup-grid {
+        grid-template-columns: 1fr;
+      }
+      .plan-inputs-grid {
+        grid-template-columns: repeat(2, 1fr);
       }
     }
   </style>
 </head>
 <body>
+  <!-- Header -->
   <header>
-    <h2>Acadex · Performance Tracker</h2>
+    <h2><span>🎓</span> Acadex · Performance Tracker</h2>
     <div class="header-user" id="header-user">
       <span class="user-pill" id="user-display">Loading...</span>
       <button class="btn-logout" onclick="logout()">Sign Out</button>
     </div>
   </header>
 
-  <!-- Two-Column Main Layout -->
-  <main class="dashboard-layout">
-    <!-- LEFT COLUMN: Sticky, independently scrolling sidebar with 5 accordion forms -->
-    <aside class="sidebar" id="dashboard-sidebar">
-      <!-- Accordion 1: Add Course Form -->
-      <div class="accordion-section" id="acc-section-course">
-        <button type="button" class="accordion-header" onclick="toggleAccordion('course')">
-          <span>➕ Add Course</span>
-          <span class="acc-icon" id="acc-icon-course">▼</span>
-        </button>
-        <div class="accordion-body" id="acc-body-course">
+  <!-- Top Navigation & Shared Course Bar -->
+  <div class="top-nav-bar">
+    <div class="nav-tabs">
+      <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview')">
+        <span>📊</span> Overview
+      </button>
+      <button class="nav-tab" data-tab="marks" onclick="switchTab('marks')">
+        <span>📝</span> Marks Entry
+      </button>
+      <button class="nav-tab" data-tab="upload" onclick="switchTab('upload')">
+        <span>📤</span> Upload Sheet
+      </button>
+      <button class="nav-tab" data-tab="setup" onclick="switchTab('setup')">
+        <span>⚙️</span> Course Setup
+      </button>
+    </div>
+
+    <div class="global-course-bar">
+      <label for="course">Selected Course:</label>
+      <select id="course"></select>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="tab-content-container">
+    <!-- Global Error Banner -->
+    <div id="init-error-banner" class="alert-error" style="display:none; margin-bottom: 16px;"></div>
+
+    <!-- ========================================== -->
+    <!-- TAB 1: OVERVIEW                            -->
+    <!-- ========================================== -->
+    <div class="tab-pane active" id="tab-overview">
+      <div class="overview-layout">
+        <!-- Filter Controls Bar -->
+        <div class="bar">
+          <div>
+            <label for="att">Min attendance %</label>
+            <input id="att" type="number" value="60" min="0" max="100">
+          </div>
+          <div>
+            <label for="mk">Min marks %</label>
+            <input id="mk" type="number" value="40" min="0" max="100">
+          </div>
+          <div style="padding-bottom: 6px;">
+            <label style="cursor:pointer; display: flex; align-items: center; gap: 6px;">
+              <input id="flag" type="checkbox"> Only flagged
+            </label>
+          </div>
+          <button class="primary-btn" onclick="load()">Apply Thresholds</button>
+        </div>
+
+        <!-- Student Search Box -->
+        <div class="search-bar">
+          <div style="flex:1;">
+            <input id="search-student-code" type="text" placeholder="Search by Student ID (e.g. 241-35-101)..." style="width:100%;" onkeydown="if(event.key==='Enter') searchStudent()">
+          </div>
+          <button class="primary-btn" onclick="searchStudent()">Search</button>
+        </div>
+        <div id="search-error" class="alert-error" style="display:none;"></div>
+
+        <!-- Metric Counters -->
+        <div class="cards">
+          <div class="card crit"><b id="c1">-</b>Critical</div>
+          <div class="card warn"><b id="c2">-</b>Warning</div>
+          <div class="card ok"><b id="c3">-</b>OK</div>
+        </div>
+
+        <!-- Assessment Plan Overview Card -->
+        <div class="assessment-plan-card" id="assessment-plan-card">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h4 style="margin:0; font-size:15px; color:#1d3a8a; display:flex; align-items:center; gap:6px;">
+                <span>📋</span> Course Assessment Plan
+              </h4>
+              <span id="plan-code-badge" style="background:#e0e7ff; color:#1d3a8a; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px;">Plan</span>
+            </div>
+            <button type="button" onclick="focusEditPlan()" style="background:#f1f5f9; color:#1d3a8a; border:1px solid #cbd5e1; padding:6px 14px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
+              ⚙️ Configure Assessment Plan
+            </button>
+          </div>
+
+          <!-- Dynamic Categories Grid -->
+          <div class="plan-chip-grid" id="plan-items-grid"></div>
+
+          <!-- Total Banner -->
+          <div id="plan-total-banner" style="margin-top:14px;"></div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+          <div class="chart-box">
+            <div class="chart-title">
+              <span>Student Risk Distribution</span>
+              <span class="chart-hint">Course cohort breakdown</span>
+            </div>
+            <div style="position:relative;flex:1;min-height:220px;max-height:240px;display:flex;justify-content:center;">
+              <canvas id="doughnutChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <div class="chart-title">
+              <span>Overall Performance Ranking</span>
+              <span class="chart-hint">Percentage So Far (%) · Click bar to inspect</span>
+            </div>
+            <div class="ranking-scroll-container">
+              <div id="rankingChartWrapper" style="position:relative; width:100%;">
+                <canvas id="rankingChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Student Table -->
+        <div id="table-container" class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="min-width: 150px;">Student</th>
+                <th>Quiz</th>
+                <th>Assignment</th>
+                <th>Mid</th>
+                <th>Presentation</th>
+                <th>Attendance</th>
+                <th>Final-Term</th>
+                <th>Total so far</th>
+                <th>Status</th>
+                <th style="min-width: 220px;">Why flagged</th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+
+        <p style="font-size:12px;color:#64748b;margin:0;">Flags are advisory only. Faculty make the final decision. Click any student row or ranking bar to view detailed performance breakdown.</p>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: MARKS ENTRY (Spreadsheet-Style Grid)-->
+    <!-- ========================================== -->
+    <div class="tab-pane" id="tab-marks">
+      <div class="placeholder-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+          <div>
+            <h3 style="margin:0 0 6px 0; color:#1d3a8a; font-size:18px;">📝 Spreadsheet-Style Marks Entry</h3>
+            <p style="margin:0; font-size:13px; color:#64748b;">
+              Quick tabular grid for fast inline grade entry. Changes are validated in real-time against active assessment weights.
+            </p>
+          </div>
+          <span style="background:#e0e7ff; color:#1d3a8a; font-weight:700; padding:5px 12px; border-radius:99px; font-size:12px;">
+            Feature In Progress · Grid View
+          </span>
+        </div>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:16px; font-size:13px; color:#475569; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div>
+            Active Course: <strong id="marks-active-course-badge" style="color:#1d3a8a;">Selected Course</strong> · Editing mode active
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="secondary-btn" style="padding:6px 12px; font-size:12px;" onclick="alert('Export will be enabled in next step.')">📥 Export CSV</button>
+            <button type="button" class="primary-btn" style="padding:6px 12px; font-size:12px;" onclick="alert('Spreadsheet batch saving is coming next.')">💾 Save All Marks</button>
+          </div>
+        </div>
+
+        <!-- Spreadsheet Mockup Grid -->
+        <div style="overflow-x:auto;">
+          <table class="spreadsheet-mock-table">
+            <thead>
+              <tr>
+                <th style="width:40px;">#</th>
+                <th style="min-width:110px;">Student ID</th>
+                <th style="min-width:160px; text-align:left;">Student Name</th>
+                <th>Quiz (15)</th>
+                <th>Assignment (5)</th>
+                <th>Midterm (30)</th>
+                <th>Presentation (8)</th>
+                <th>Attendance (7)</th>
+                <th>Final-Term (40)</th>
+                <th>Standing</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><strong>241-35-101</strong></td>
+                <td style="text-align:left;">Rafi Ahmed</td>
+                <td><input type="text" value="13.5" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="4.5" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="26.0" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="7.0" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="6.5" readonly style="background:#f8fafc;"></td>
+                <td><span style="color:#94a3b8; font-style:italic;">Pending</span></td>
+                <td><span class="badge ok">OK</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>241-35-102</strong></td>
+                <td style="text-align:left;">Nusrat Jahan</td>
+                <td><input type="text" value="11.0" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="4.0" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="18.0" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="5.5" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="5.8" readonly style="background:#f8fafc;"></td>
+                <td><span style="color:#94a3b8; font-style:italic;">Pending</span></td>
+                <td><span class="badge warning">WARNING</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>241-35-103</strong></td>
+                <td style="text-align:left;">Tanvir Hasan</td>
+                <td><input type="text" value="8.0" readonly style="background:#fff5f5; color:#b00020; font-weight:700;"></td>
+                <td><input type="text" value="2.5" readonly style="background:#fff5f5; color:#b00020; font-weight:700;"></td>
+                <td><input type="text" value="12.0" readonly style="background:#fff5f5; color:#b00020; font-weight:700;"></td>
+                <td><input type="text" value="4.0" readonly style="background:#f8fafc;"></td>
+                <td><input type="text" value="3.2" readonly style="background:#fff5f5; color:#b00020; font-weight:700;"></td>
+                <td><span style="color:#94a3b8; font-style:italic;">Pending</span></td>
+                <td><span class="badge critical">CRITICAL</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p style="font-size:12px; color:#64748b; margin-top:14px;">
+          💡 Full inline spreadsheet editing and live grading grid will be integrated in the upcoming release.
+        </p>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: UPLOAD SHEET (File Upload Panel)   -->
+    <!-- ========================================== -->
+    <div class="tab-pane" id="tab-upload">
+      <div class="placeholder-card">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:14px;">
+          <div>
+            <h3 style="margin:0 0 6px 0; color:#1d3a8a; font-size:18px;">📤 Bulk Grade Sheet Upload</h3>
+            <p style="margin:0; font-size:13px; color:#64748b;">
+              Upload spreadsheet files (.csv, .xlsx) to import student marks and attendance records in bulk.
+            </p>
+          </div>
+          <span style="background:#fef3c7; color:#92400e; font-weight:700; padding:5px 12px; border-radius:99px; font-size:12px;">
+            Feature In Progress · File Parser
+          </span>
+        </div>
+
+        <!-- Drag & Drop Zone -->
+        <div class="upload-dropzone" onclick="alert('File upload parser will be configured next.')">
+          <div style="font-size:40px; margin-bottom:8px;">📁</div>
+          <h4 style="margin:0 0 6px 0; font-size:16px; color:#1d3a8a;">Drag & Drop Your Spreadsheet Here</h4>
+          <p style="margin:0 0 14px 0; font-size:13px; color:#64748b;">
+            Supports Excel (.xlsx, .xls) and Comma-Separated Values (.csv) up to 15MB
+          </p>
+          <button type="button" class="primary-btn" style="padding:8px 18px;">Browse Computer Files</button>
+        </div>
+
+        <!-- Instructions & Template Download -->
+        <div style="margin-top:24px; display:grid; grid-template-columns: 2fr 1fr; gap:16px;">
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px;">
+            <h4 style="margin:0 0 8px 0; font-size:14px; color:#1d3a8a;">Required Spreadsheet Headers</h4>
+            <ul style="margin:0; padding-left:18px; font-size:13px; color:#475569; line-height:1.6;">
+              <li><code>student_code</code> (e.g. 241-35-101)</li>
+              <li><code>category</code> (quiz, assignment, midterm, final, presentation, attendance)</li>
+              <li><code>assessment</code> (Display name, e.g. "Quiz 1", "Midterm Exam")</li>
+              <li><code>obtained</code> (Obtained marks, numeric)</li>
+              <li><code>total</code> (Total possible marks, numeric)</li>
+            </ul>
+          </div>
+
+          <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div>
+              <h4 style="margin:0 0 6px 0; font-size:14px; color:#1d3a8a;">Template File</h4>
+              <p style="margin:0 0 12px 0; font-size:12px; color:#64748b;">
+                Download our pre-formatted spreadsheet template with DIU course columns.
+              </p>
+            </div>
+            <button type="button" class="secondary-btn" style="width:100%;" onclick="alert('Sample template download will be provided in next step.')">
+              📥 Download CSV Template
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: COURSE SETUP (Full-width forms)    -->
+    <!-- ========================================== -->
+    <div class="tab-pane" id="tab-setup">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; background:#fff; padding:14px 20px; border-radius:10px; border:1px solid #e2e8f0;">
+        <div>
+          <h3 style="margin:0 0 4px 0; font-size:17px; color:#1d3a8a;">⚙️ Course Setup & Management</h3>
+          <div style="font-size:13px; color:#64748b;">
+            Currently Managing: <strong id="setup-active-course-name" style="color:#1d3a8a;">Selected Course</strong>
+          </div>
+        </div>
+        <span style="font-size:12px; color:#475569; background:#f1f5f9; padding:4px 10px; border-radius:6px; border:1px solid #e2e8f0;">
+          All forms below apply to the course selected in the top bar.
+        </span>
+      </div>
+
+      <div class="setup-grid">
+        <!-- 1. Add Course Card -->
+        <div class="setup-card">
+          <div class="setup-card-title">
+            <span>➕ Add New Course</span>
+          </div>
+          <div class="setup-card-subtitle">Create a new course cohort. It automatically receives the default 105-mark plan.</div>
+
           <div id="course-success-msg" class="alert-success" style="display:none;"></div>
           <div id="course-error-msg" class="alert-error" style="display:none;"></div>
 
@@ -411,18 +858,17 @@
               <input type="text" id="form-course-name" placeholder="e.g. Operating Systems" style="width:100%;" required>
               <div class="field-error" id="form-course-name-error"></div>
             </div>
-            <button type="submit" class="primary-btn" id="btn-course-submit" style="width:100%;margin-top:2px;">Create Course</button>
+            <button type="submit" class="primary-btn" id="btn-course-submit" style="width:100%; margin-top:6px;">Create Course</button>
           </form>
         </div>
-      </div>
 
-      <!-- Accordion 2: Enroll Student Form -->
-      <div class="accordion-section" id="acc-section-enroll">
-        <button type="button" class="accordion-header" onclick="toggleAccordion('enroll')">
-          <span>🎓 Enroll Student</span>
-          <span class="acc-icon" id="acc-icon-enroll">▼</span>
-        </button>
-        <div class="accordion-body" id="acc-body-enroll">
+        <!-- 2. Enroll Student Card -->
+        <div class="setup-card">
+          <div class="setup-card-title">
+            <span>🎓 Enroll Student</span>
+          </div>
+          <div class="setup-card-subtitle">Enroll an existing student or create a new student in the currently selected course.</div>
+
           <div id="enroll-success-msg" class="alert-success" style="display:none;"></div>
           <div id="enroll-error-msg" class="alert-error" style="display:none;"></div>
 
@@ -432,28 +878,89 @@
               <input type="text" id="form-enroll-code" placeholder="e.g. 241-35-101" style="width:100%;" required>
               <div class="field-error" id="form-enroll-code-error"></div>
             </div>
-            <div class="form-group">
-              <label for="form-enroll-name">Student Name</label>
-              <input type="text" id="form-enroll-name" placeholder="e.g. Sadia Rahman" style="width:100%;" required>
-              <div class="field-error" id="form-enroll-name-error"></div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="form-enroll-name">Student Name</label>
+                <input type="text" id="form-enroll-name" placeholder="e.g. Sadia Rahman" style="width:100%;" required>
+                <div class="field-error" id="form-enroll-name-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="form-enroll-email">Student Email</label>
+                <input type="email" id="form-enroll-email" placeholder="e.g. sadia.101@diu.edu.bd" style="width:100%;" required>
+                <div class="field-error" id="form-enroll-email-error"></div>
+              </div>
             </div>
-            <div class="form-group">
-              <label for="form-enroll-email">Student Email</label>
-              <input type="email" id="form-enroll-email" placeholder="e.g. sadia.101@diu.edu.bd" style="width:100%;" required>
-              <div class="field-error" id="form-enroll-email-error"></div>
-            </div>
-            <button type="submit" class="primary-btn" id="btn-enroll-submit" style="width:100%;margin-top:2px;">Enroll Student</button>
+            <button type="submit" class="primary-btn" id="btn-enroll-submit" style="width:100%; margin-top:6px;">Enroll Student</button>
           </form>
         </div>
-      </div>
 
-      <!-- Accordion 3: Log Attendance Form -->
-      <div class="accordion-section" id="acc-section-att">
-        <button type="button" class="accordion-header" onclick="toggleAccordion('att')">
-          <span>📅 Log Attendance</span>
-          <span class="acc-icon" id="acc-icon-att">▼</span>
-        </button>
-        <div class="accordion-body" id="acc-body-att">
+        <!-- 3. Edit Assessment Plan Card (Full Width) -->
+        <div class="setup-card full-width">
+          <div class="setup-card-title">
+            <span>⚙️ Edit Course Assessment Plan</span>
+            <span id="setup-plan-code" style="background:#e0e7ff; color:#1d3a8a; font-size:12px; font-weight:700; padding:2px 10px; border-radius:99px;">SE 331</span>
+          </div>
+          <div class="setup-card-subtitle">
+            Configure the maximum mark weight for each of the 6 required categories. Changes scale all student standing scores deterministically.
+          </div>
+
+          <div id="plan-success-msg" class="alert-success" style="display:none;"></div>
+          <div id="plan-error-msg" class="alert-error" style="display:none;"></div>
+
+          <form id="form-edit-plan" onsubmit="submitAssessmentPlan(event)" novalidate>
+            <div class="plan-inputs-grid">
+              <div class="form-group">
+                <label for="plan-in-quiz">Quiz Max Marks</label>
+                <input type="number" id="plan-in-quiz" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-quiz-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-assignment">Assignment Max</label>
+                <input type="number" id="plan-in-assignment" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-assignment-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-midterm">Midterm Max Marks</label>
+                <input type="number" id="plan-in-midterm" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-midterm-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-final">Final-Term Max Marks</label>
+                <input type="number" id="plan-in-final" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-final-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-presentation">Presentation Max</label>
+                <input type="number" id="plan-in-presentation" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-presentation-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="plan-in-attendance">Attendance Max</label>
+                <input type="number" id="plan-in-attendance" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
+                <div class="field-error" id="plan-attendance-error"></div>
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; background:#f8fafc; padding:10px 14px; border-radius:6px; border:1px solid #e2e8f0;">
+              <div id="plan-sum-preview" style="font-size:13px; font-weight:600; color:#475569;">
+                Total Sum: <span id="plan-preview-num" style="font-size:15px; font-weight:700;">105</span> marks
+              </div>
+              <div style="font-size:12px; color:#64748b;">
+                Summing to 105 or 100 is supported. Unfinalized categories scale to assessed marks so far.
+              </div>
+            </div>
+
+            <button type="submit" class="primary-btn" id="btn-save-plan" style="padding:10px 24px;">Save Assessment Plan</button>
+          </form>
+        </div>
+
+        <!-- 4. Quick Data Entry: Attendance & Mark (2 Columns) -->
+        <div class="setup-card">
+          <div class="setup-card-title">
+            <span>📅 Quick Attendance Entry</span>
+          </div>
+          <div class="setup-card-subtitle">Record daily lecture or lab attendance for a student.</div>
+
           <div id="att-success-msg" class="alert-success" style="display:none;"></div>
           <div id="att-error-msg" class="alert-error" style="display:none;"></div>
 
@@ -478,231 +985,91 @@
                 <div class="field-error" id="form-att-date-error"></div>
               </div>
             </div>
-            <button type="submit" class="primary-btn" id="btn-att-submit" style="width:100%;margin-top:2px;">Save Attendance</button>
+            <button type="submit" class="primary-btn" id="btn-att-submit" style="width:100%; margin-top:6px;">Save Attendance</button>
           </form>
         </div>
-      </div>
 
-      <!-- Accordion 2: Record Assessment Mark Form -->
-      <div class="accordion-section" id="acc-section-mark">
-        <button type="button" class="accordion-header" onclick="toggleAccordion('mark')">
-          <span>📝 Record Mark</span>
-          <span class="acc-icon" id="acc-icon-mark">▼</span>
-        </button>
-        <div class="accordion-body" id="acc-body-mark">
+        <div class="setup-card">
+          <div class="setup-card-title">
+            <span>📝 Quick Assessment Mark Entry</span>
+          </div>
+          <div class="setup-card-subtitle">Record a single assessment mark for an enrolled student.</div>
+
           <div id="mark-success-msg" class="alert-success" style="display:none;"></div>
           <div id="mark-error-msg" class="alert-error" style="display:none;"></div>
 
           <form id="form-mark" onsubmit="submitMark(event)" novalidate>
-            <div class="form-group">
-              <label for="form-mark-code">Student ID</label>
-              <input type="text" id="form-mark-code" placeholder="e.g. 241-35-101" style="width:100%;" required>
-              <div class="field-error" id="form-mark-code-error"></div>
-            </div>
-            <div class="form-group">
-              <label for="form-mark-cat">Category</label>
-              <select id="form-mark-cat" style="width:100%;">
-                <option value="quiz">Quiz</option>
-                <option value="assignment">Assignment</option>
-                <option value="presentation">Presentation</option>
-                <option value="midterm">Midterm</option>
-                <option value="final">Final</option>
-              </select>
-              <div class="field-error" id="form-mark-cat-error"></div>
+            <div class="form-row-2">
+              <div class="form-group">
+                <label for="form-mark-code">Student ID</label>
+                <input type="text" id="form-mark-code" placeholder="e.g. 241-35-101" style="width:100%;" required>
+                <div class="field-error" id="form-mark-code-error"></div>
+              </div>
+              <div class="form-group">
+                <label for="form-mark-cat">Category</label>
+                <select id="form-mark-cat" style="width:100%;">
+                  <option value="quiz">Quiz</option>
+                  <option value="assignment">Assignment</option>
+                  <option value="presentation">Presentation</option>
+                  <option value="midterm">Midterm</option>
+                  <option value="final">Final</option>
+                </select>
+                <div class="field-error" id="form-mark-cat-error"></div>
+              </div>
             </div>
             <div class="form-group">
               <label for="form-mark-assessment">Assessment Name</label>
-              <input type="text" id="form-mark-assessment" placeholder="e.g. Quiz 3, Midterm..." style="width:100%;" required>
+              <input type="text" id="form-mark-assessment" placeholder="e.g. Quiz 3, Assignment 2..." style="width:100%;" required>
               <div class="field-error" id="form-mark-assessment-error"></div>
             </div>
             <div class="form-row-2">
               <div class="form-group">
-                <label for="form-mark-obtained">Obtained</label>
+                <label for="form-mark-obtained">Obtained Marks</label>
                 <input type="number" id="form-mark-obtained" step="0.1" placeholder="e.g. 8.5" style="width:100%;" required>
                 <div class="field-error" id="form-mark-obtained-error"></div>
               </div>
               <div class="form-group">
-                <label for="form-mark-total">Total</label>
+                <label for="form-mark-total">Total Possible Marks</label>
                 <input type="number" id="form-mark-total" step="0.1" placeholder="e.g. 10" style="width:100%;" required>
                 <div class="field-error" id="form-mark-total-error"></div>
               </div>
             </div>
-            <button type="submit" class="primary-btn" id="btn-mark-submit" style="width:100%;margin-top:2px;">Save Mark</button>
+            <button type="submit" class="primary-btn" id="btn-mark-submit" style="width:100%; margin-top:6px;">Save Mark</button>
           </form>
         </div>
-      </div>
 
-      <!-- Accordion 3: Edit Assessment Plan Form -->
-      <div class="accordion-section" id="acc-section-plan">
-        <button type="button" class="accordion-header" onclick="toggleAccordion('plan')">
-          <span>⚙️ Edit Assessment Plan</span>
-          <span class="acc-icon" id="acc-icon-plan">▼</span>
-        </button>
-        <div class="accordion-body" id="acc-body-plan">
-          <div id="plan-success-msg" class="alert-success" style="display:none;"></div>
-          <div id="plan-error-msg" class="alert-error" style="display:none;"></div>
+        <!-- 5. Danger Zone & Grading Rules Card (Full Width) -->
+        <div class="setup-card danger-card full-width">
+          <div class="setup-card-title">
+            <span>⚠️ Danger Zone & Performance Standing Rules</span>
+          </div>
+          <div class="setup-card-subtitle" style="color:#991b1b;">
+            Deterministic risk classification and destructive course operations.
+          </div>
 
-          <form id="form-edit-plan" onsubmit="submitAssessmentPlan(event)" novalidate>
-            <div class="plan-inputs-grid">
-              <div class="form-group">
-                <label for="plan-in-quiz">Quiz Max</label>
-                <input type="number" id="plan-in-quiz" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
-                <div class="field-error" id="plan-quiz-error"></div>
-              </div>
-              <div class="form-group">
-                <label for="plan-in-assignment">Assignment</label>
-                <input type="number" id="plan-in-assignment" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
-                <div class="field-error" id="plan-assignment-error"></div>
-              </div>
-              <div class="form-group">
-                <label for="plan-in-midterm">Midterm Max</label>
-                <input type="number" id="plan-in-midterm" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
-                <div class="field-error" id="plan-midterm-error"></div>
-              </div>
-              <div class="form-group">
-                <label for="plan-in-final">Final Max</label>
-                <input type="number" id="plan-in-final" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
-                <div class="field-error" id="plan-final-error"></div>
-              </div>
-              <div class="form-group">
-                <label for="plan-in-presentation">Presentation</label>
-                <input type="number" id="plan-in-presentation" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
-                <div class="field-error" id="plan-presentation-error"></div>
-              </div>
-              <div class="form-group">
-                <label for="plan-in-attendance">Attendance</label>
-                <input type="number" id="plan-in-attendance" step="0.5" min="0" required style="width:100%;" oninput="updatePlanSumPreview()">
-                <div class="field-error" id="plan-attendance-error"></div>
-              </div>
+          <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; align-items:center;">
+            <div style="font-size:13px; color:#475569; line-height:1.6;">
+              <p style="margin:0 0 8px 0;"><strong>Active Policy Thresholds:</strong></p>
+              <ul style="margin:0; padding-left:18px;">
+                <li><strong>Critical Standing:</strong> Triggered when Student Attendance is below threshold (default 60%) <em>AND</em> at least one academic marks category is below threshold (default 40%).</li>
+                <li><strong>Warning Standing:</strong> Triggered when any individual component (attendance, quiz, assignment, presentation, or midterm) falls below threshold.</li>
+                <li><strong>OK Standing:</strong> All assessed categories are at or above passing threshold.</li>
+              </ul>
             </div>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-              <div id="plan-sum-preview" style="font-size:12px; font-weight:600; color:#475569;">
-                Sum: <span id="plan-preview-num">105</span> max
+            <div style="background:#fff; border:1px solid #fecaca; border-radius:8px; padding:16px;">
+              <h5 style="margin:0 0 8px 0; color:#991b1b; font-size:13px;">Archiving & Deletion</h5>
+              <p style="margin:0 0 12px 0; font-size:12px; color:#64748b;">
+                Archived courses are hidden from the active roster but historical grade records remain preserved in the database.
+              </p>
+              <div style="display:flex; gap:8px;">
+                <button type="button" class="secondary-btn" style="border-color:#fca5a5; color:#991b1b; font-size:12px; padding:6px 12px;" onclick="alert('Course archiving will be available after term finalization.')">Archive Course</button>
+                <button type="button" class="secondary-btn" style="border-color:#fca5a5; color:#991b1b; font-size:12px; padding:6px 12px;" onclick="alert('Resetting course data requires Department Head authorization.')">Reset Data</button>
               </div>
-            </div>
-
-            <button type="submit" class="primary-btn" id="btn-save-plan" style="width:100%;">Save Assessment Plan</button>
-          </form>
-        </div>
-      </div>
-    </aside>
-
-    <!-- RIGHT COLUMN: Main Area (Course selector, thresholds, search, cards, charts, table) -->
-    <div class="main-content">
-      <!-- Global Error / Warning Banner -->
-      <div id="init-error-banner" class="alert-error" style="display:none; margin-bottom: 14px;"></div>
-
-      <!-- Filter Controls Bar -->
-      <div class="bar">
-        <div>
-          <label for="course">Course</label>
-          <select id="course"></select>
-        </div>
-        <div>
-          <label for="att">Min attendance %</label>
-          <input id="att" type="number" value="60" min="0" max="100">
-        </div>
-        <div>
-          <label for="mk">Min marks %</label>
-          <input id="mk" type="number" value="40" min="0" max="100">
-        </div>
-        <div style="padding-bottom: 8px;">
-          <label style="cursor:pointer; display: flex; align-items: center; gap: 6px;">
-            <input id="flag" type="checkbox"> Only flagged
-          </label>
-        </div>
-        <button class="primary-btn" onclick="load()">Check</button>
-      </div>
-
-      <!-- Student Search Box -->
-      <div class="search-bar">
-        <div style="flex:1;">
-          <input id="search-student-code" type="text" placeholder="Search by Student ID (e.g. 241-35-101)..." style="width:100%;" onkeydown="if(event.key==='Enter') searchStudent()">
-        </div>
-        <button class="primary-btn" onclick="searchStudent()">Search</button>
-      </div>
-      <div id="search-error" class="alert-error" style="display:none;"></div>
-
-      <!-- Metric Counters -->
-      <div class="cards">
-        <div class="card crit"><b id="c1">-</b>Critical</div>
-        <div class="card warn"><b id="c2">-</b>Warning</div>
-        <div class="card ok"><b id="c3">-</b>OK</div>
-      </div>
-
-      <!-- Assessment Plan Overview Card -->
-      <div class="assessment-plan-card" id="assessment-plan-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-          <div style="display:flex; align-items:center; gap:8px;">
-            <h4 style="margin:0; font-size:15px; color:#1d3a8a; display:flex; align-items:center; gap:6px;">
-              <span>📋</span> Course Assessment Plan
-            </h4>
-            <span id="plan-code-badge" style="background:#e0e7ff; color:#1d3a8a; font-size:11px; font-weight:700; padding:2px 8px; border-radius:99px;">SE 331</span>
-          </div>
-          <button type="button" onclick="focusEditPlan()" style="background:#f1f5f9; color:#1d3a8a; border:1px solid #cbd5e1; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">
-            ✏️ Edit in Sidebar
-          </button>
-        </div>
-
-        <!-- Plan Categories Overview Grid -->
-        <div class="plan-chip-grid" id="plan-items-grid">
-          <!-- Rendered dynamically -->
-        </div>
-
-        <!-- Plan Total & Warning / Note banner -->
-        <div id="plan-total-banner" style="margin-top:12px;"></div>
-      </div>
-
-      <!-- Course Level Analytics Charts -->
-      <div class="charts-row">
-        <!-- 1) Doughnut Chart: Risk distribution -->
-        <div class="chart-box">
-          <div class="chart-title">
-            <span>Student Risk Distribution</span>
-            <span class="chart-hint">Based on course summary</span>
-          </div>
-          <div style="position:relative;flex:1;min-height:220px;max-height:240px;display:flex;justify-content:center;">
-            <canvas id="doughnutChart"></canvas>
-          </div>
-        </div>
-
-        <!-- 4) Horizontal Bar Chart: Student ranking by percentage_so_far -->
-        <div class="chart-box">
-          <div class="chart-title">
-            <span>Overall Performance Ranking</span>
-            <span class="chart-hint">Percentage So Far (%) · Click bar to inspect</span>
-          </div>
-          <div class="ranking-scroll-container">
-            <div id="rankingChartWrapper" style="position:relative; width:100%;">
-              <canvas id="rankingChart"></canvas>
             </div>
           </div>
         </div>
       </div>
-
-      <!-- Main Student Table with Assessment Plan Weights -->
-      <div id="table-container" class="table-container">
-        <table>
-          <thead>
-            <tr>
-              <th style="min-width: 140px;">Student</th>
-              <th>Quiz</th>
-              <th>Assignment</th>
-              <th>Mid</th>
-              <th>Presentation</th>
-              <th>Attendance</th>
-              <th>Final-Term</th>
-              <th>Total so far</th>
-              <th>Status</th>
-              <th style="min-width: 220px;">Why flagged</th>
-            </tr>
-          </thead>
-          <tbody id="rows"></tbody>
-        </table>
-      </div>
-
-      <p style="font-size:12px;color:#666;margin:0">Flags are advisory only. Faculty make the final decision. Tip: Click any student row or ranking bar to view detailed performance breakdown.</p>
     </div>
   </main>
 
@@ -809,21 +1176,26 @@
       if (e.key === "Escape") closeDetail();
     });
 
-    // Accordion Toggle Helper
-    function toggleAccordion(id, forceState) {
-      const body = document.getElementById(`acc-body-${id}`);
-      const icon = document.getElementById(`acc-icon-${id}`);
-      if (!body) return;
-      const isCurrentlyOpen = body.style.display !== "none";
-      const shouldOpen = forceState !== undefined ? forceState : !isCurrentlyOpen;
-      body.style.display = shouldOpen ? "block" : "none";
-      if (icon) {
-        icon.textContent = shouldOpen ? "▲" : "▼";
+    // Top Tab Switcher
+    function switchTab(tabId) {
+      document.querySelectorAll('.nav-tab').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tabId);
+      });
+      document.querySelectorAll('.tab-pane').forEach(p => {
+        p.classList.toggle('active', p.id === `tab-${tabId}`);
+      });
+
+      if (tabId === 'overview') {
+        if (doughnutChartInstance) doughnutChartInstance.resize();
+        if (rankingChartInstance) rankingChartInstance.resize();
+      }
+      if (tabId === 'setup') {
+        updateSetupCourseBadges();
       }
     }
 
     function focusEditPlan() {
-      toggleAccordion("plan", true);
+      switchTab('setup');
       const inp = document.getElementById("plan-in-quiz");
       if (inp) {
         inp.focus();
@@ -831,29 +1203,36 @@
       }
     }
 
-    function initAccordionState() {
-      const isMobile = window.innerWidth < 900;
-      const allSections = ["course", "enroll", "att", "mark", "plan"];
-      if (isMobile) {
-        allSections.forEach(s => toggleAccordion(s, false));
-      } else {
-        allSections.forEach(s => toggleAccordion(s, true));
+    function updateSetupCourseBadges() {
+      const courseSelect = document.getElementById("course");
+      if (!courseSelect) return;
+      const selectedText = courseSelect.options[courseSelect.selectedIndex]?.text || "Selected Course";
+      const badge = document.getElementById("setup-active-course-name");
+      if (badge) badge.textContent = selectedText;
+      const marksBadge = document.getElementById("marks-active-course-badge");
+      if (marksBadge) marksBadge.textContent = selectedText;
+      const planCode = document.getElementById("setup-plan-code");
+      if (planCode && currentAssessmentPlan) {
+        planCode.textContent = currentAssessmentPlan.course_code || "Active Plan";
       }
     }
 
     // Initialize today's date for attendance form
     const todayStr = new Date().toISOString().split("T")[0];
-    document.getElementById("form-att-date").value = todayStr;
-    document.getElementById("form-att-date").max = todayStr;
+    const attDateInput = document.getElementById("form-att-date");
+    if (attDateInput) {
+      attDateInput.value = todayStr;
+      attDateInput.max = todayStr;
+    }
 
     // Attach course dropdown change listener
     document.getElementById("course").addEventListener("change", () => {
       load();
+      updateSetupCourseBadges();
     });
 
     async function init() {
       hideInitError();
-      initAccordionState();
 
       // Step 1: Fetch current authenticated user
       try {
@@ -908,6 +1287,7 @@
       // Populate dropdown and ensure the first course is selected
       courseSelect.innerHTML = cs.map(c => `<option value="${c.id}">${c.code} - ${c.name}</option>`).join("");
       courseSelect.value = cs[0].id;
+      updateSetupCourseBadges();
 
       // Step 3: Load summary, table, assessment plan card, and charts for selected course
       try {
@@ -936,13 +1316,15 @@
         const data = await res.json();
         currentAssessmentPlan = data;
         renderAssessmentPlanCard(data);
+        updateSetupCourseBadges();
       } catch (err) {
         console.error("Failed to load assessment plan:", err);
       }
     }
 
     function renderAssessmentPlanCard(data) {
-      document.getElementById("plan-code-badge").textContent = data.course_code || "Plan";
+      const codeBadge = document.getElementById("plan-code-badge");
+      if (codeBadge) codeBadge.textContent = data.course_code || "Plan";
 
       const catDisplayNames = {
         quiz: "Quiz",
@@ -960,39 +1342,43 @@
       });
 
       const gridEl = document.getElementById("plan-items-grid");
-      gridEl.innerHTML = order.map(cat => {
-        const mx = itemMap[cat] !== undefined ? itemMap[cat] : "-";
-        return `
-          <div class="plan-chip">
-            <div class="plan-chip-title">${catDisplayNames[cat]}</div>
-            <div class="plan-chip-val">${mx}</div>
-            <div class="plan-chip-sub">max marks</div>
-          </div>
-        `;
-      }).join("");
+      if (gridEl) {
+        gridEl.innerHTML = order.map(cat => {
+          const mx = itemMap[cat] !== undefined ? itemMap[cat] : "-";
+          return `
+            <div class="plan-chip">
+              <div class="plan-chip-title">${catDisplayNames[cat]}</div>
+              <div class="plan-chip-val">${mx}</div>
+              <div class="plan-chip-sub">max marks</div>
+            </div>
+          `;
+        }).join("");
+      }
 
       // Total Banner (flag if != 100)
       const bannerEl = document.getElementById("plan-total-banner");
-      const total = data.total_max_marks;
-      if (total !== 100) {
-        bannerEl.innerHTML = `
-          <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:10px 14px; font-size:13px; color:#92400e; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-            <div style="display:flex; align-items:center; gap:8px;">
-              <span style="font-size:16px;">⚠️</span>
-              <span>Total Plan Weight: <strong>${total} marks</strong>. <em>(Note: Plan does not sum to 100; standing scales to assessed weight so far).</em></span>
+      if (bannerEl) {
+        const total = data.total_max_marks;
+        if (total !== 100) {
+          bannerEl.innerHTML = `
+            <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:6px; padding:10px 14px; font-size:13px; color:#92400e; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:16px;">⚠️</span>
+                <span>Total Plan Weight: <strong>${total} marks</strong>. <em>(Note: Plan does not sum to 100; standing scales to assessed weight so far).</em></span>
+              </div>
+              <span style="background:#fef3c7; color:#b45309; font-weight:700; padding:2px 8px; border-radius:99px; font-size:11px;">FLAGGED: != 100</span>
             </div>
-            <span style="background:#fef3c7; color:#b45309; font-weight:700; padding:2px 8px; border-radius:99px; font-size:11px;">FLAGGED: != 100</span>
-          </div>
-        `;
-      } else {
-        bannerEl.innerHTML = `
-          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px 14px; font-size:13px; color:#15803d; display:flex; align-items:center; gap:8px;">
-            <span>✓ Total Plan Weight: <strong>100 marks</strong>. Plan correctly sums to 100.</span>
-          </div>
-        `;
+          `;
+        } else {
+          bannerEl.innerHTML = `
+            <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px; padding:8px 14px; font-size:13px; color:#15803d; display:flex; align-items:center; gap:8px;">
+              <span>✓ Total Plan Weight: <strong>100 marks</strong>. Plan correctly sums to 100.</span>
+            </div>
+          `;
+        }
       }
 
-      // Pre-fill Edit Plan Form inputs in Sidebar
+      // Pre-fill Edit Plan Form inputs in Course Setup Tab
       order.forEach(cat => {
         const inp = document.getElementById(`plan-in-${cat}`);
         if (inp && itemMap[cat] !== undefined) {
@@ -1036,7 +1422,6 @@
       });
     }
 
-    // Submit Edit Assessment Plan Form in Sidebar
     async function submitAssessmentPlan(e) {
       e.preventDefault();
       clearPlanErrors();
@@ -1104,10 +1489,7 @@
         sBox.textContent = "Assessment plan updated successfully!";
         sBox.style.display = "block";
 
-        // Refresh plan card display
         await loadAssessmentPlan();
-
-        // Refresh table, summary, and charts immediately!
         await load();
 
         setTimeout(() => {
@@ -1186,7 +1568,7 @@
         const rowsEl = document.getElementById("rows");
         const totalEnrolled = d.summary ? d.summary.total : (d.all_students ? d.all_students.length : d.students.length);
         if (totalEnrolled === 0) {
-          rowsEl.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:36px 16px;color:#64748b;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">👥</div><strong>No students enrolled yet</strong><div style="font-size:12px;color:#94a3b8;margin-top:4px;">Use the "Enroll Student" form in the left sidebar to add students to this course.</div></td></tr>`;
+          rowsEl.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:36px 16px;color:#64748b;font-size:14px;"><div style="font-size:28px;margin-bottom:8px;">👥</div><strong>No students enrolled yet</strong><div style="font-size:12px;color:#94a3b8;margin-top:4px;">Switch to the "Course Setup" tab above to enroll students into this course.</div></td></tr>`;
           return;
         }
 
@@ -1348,7 +1730,6 @@
 
       const scores = allStudents.map(s => s.percentage_so_far ?? s.overall_score ?? 0);
 
-      // Color bars: red below threshold, amber near it, green for good
       const barColors = scores.map(score => {
         if (score < marksThreshold) return "#ef4444";
         if (score < marksThreshold + 15) return "#f59e0b";
@@ -1420,104 +1801,84 @@
       errEl.textContent = "";
 
       if (!code) {
-        errEl.textContent = "Please enter a student ID to search.";
+        errEl.textContent = "Please enter a student ID.";
         errEl.style.display = "block";
         return;
       }
-      openStudentDetail(code);
+
+      await openStudentDetail(code);
     }
 
     async function openStudentDetail(studentCode) {
       const courseId = document.getElementById("course").value;
-      const attVal = document.getElementById("att").value;
-      const mkVal = document.getElementById("mk").value;
-      const errEl = document.getElementById("search-error");
-      errEl.style.display = "none";
-      errEl.textContent = "";
+      const attVal = parseFloat(document.getElementById("att").value) || 60;
+      const mkVal = parseFloat(document.getElementById("mk").value) || 40;
 
-      const q = `attendance_threshold=${encodeURIComponent(attVal)}&marks_threshold=${encodeURIComponent(mkVal)}`;
       try {
-        const res = await fetch(`/api/courses/${courseId}/students/${encodeURIComponent(studentCode)}/performance?${q}`, {
+        const res = await fetch(`/api/courses/${courseId}/students/${encodeURIComponent(studentCode)}/performance?attendance_threshold=${attVal}&marks_threshold=${mkVal}`, {
           headers: authHeaders()
         });
-
         if (res.status === 401) {
           logout();
           return;
         }
-
-        if (res.status === 404) {
-          const data = await res.json();
-          errEl.textContent = data.detail || `Student ID '${studentCode}' not found in this course.`;
-          errEl.style.display = "block";
-          return;
-        }
-
         if (!res.ok) {
-          errEl.textContent = `Error fetching student performance (${res.status}).`;
+          const data = await res.json().catch(() => ({}));
+          const errEl = document.getElementById("search-error");
+          errEl.textContent = data.detail || `Student '${studentCode}' not found in course.`;
           errEl.style.display = "block";
           return;
         }
-
-        const data = await res.json();
-        renderDetailModal(data, parseFloat(mkVal) || 40);
-      } catch (err) {
-        errEl.textContent = "Network error while looking up student ID.";
-        errEl.style.display = "block";
+        const detail = await res.json();
+        renderDetailModal(detail, mkVal);
+      } catch (e) {
+        console.error("Failed to load student detail:", e);
       }
     }
 
     function renderDetailModal(d, marksThreshold) {
       document.getElementById("det-name").textContent = d.name;
-      document.getElementById("det-code").textContent = `ID: ${d.code}`;
+      document.getElementById("det-code").textContent = d.code;
       
-      const overallText = d.percentage_so_far !== undefined 
-        ? `Score so far: ${d.total_obtained}/${d.total_assessed_max} (${d.percentage_so_far}%) · Plan Total: ${d.total_plan_max} max`
-        : (d.overall_score !== null ? `Overall Score: ${d.overall_score}%` : '');
-      document.getElementById("det-overall").textContent = overallText;
-      
-      const badgeEl = document.getElementById("det-badge");
-      badgeEl.className = `badge ${d.level}`;
-      badgeEl.textContent = d.level.toUpperCase();
+      const badge = document.getElementById("det-badge");
+      badge.textContent = d.level.toUpperCase();
+      badge.className = `badge ${d.level}`;
 
-      // Bar chart per category comparing obtained marks vs max marks
+      const totalOb = d.total_obtained !== undefined ? d.total_obtained : "-";
+      const totalAssessed = d.total_assessed_max !== undefined ? d.total_assessed_max : "-";
+      document.getElementById("det-overall").textContent = `Score so far: ${totalOb} / ${totalAssessed} (${d.percentage_so_far}%)`;
+
       renderStudentDetailChart(d, marksThreshold);
-
-      // What-if Final-Term Helper
       renderWhatIf(d.what_if);
 
-      const compEl = document.getElementById("det-components");
-      const compKeys = [
-        { key: "attendance", label: "Attendance" },
-        { key: "quiz", label: "Quiz Avg" },
-        { key: "assignment", label: "Assignment" },
-        { key: "presentation", label: "Presentation" },
-        { key: "midterm", label: "Midterm" },
-        { key: "final", label: "Final Exam" }
+      const comps = [
+        { label: "Attendance", key: "attendance" },
+        { label: "Quiz", key: "quiz" },
+        { label: "Assignment", key: "assignment" },
+        { label: "Presentation", key: "presentation" },
+        { label: "Midterm", key: "midterm" },
+        { label: "Final-Term", key: "final" }
       ];
 
-      compEl.innerHTML = compKeys.map(c => {
-        const item = d.components[c.key] || { obtained_marks: 0, max_marks: 0, percentage: null, status: "pending" };
-        const isPending = item.status === "pending";
-        const isLow = item.status === "low";
-        
-        let valText = "-";
-        let tag = `<div class="comp-tag" style="color:#64748b">⏳ Pending</div>`;
-        let cardClass = "comp-card";
-
-        if (isPending) {
-          valText = `- / ${item.max_marks}`;
-        } else {
-          valText = `${item.obtained_marks} / ${item.max_marks}`;
-          const pctSub = `<small style="font-size:12px;font-weight:normal"> (${item.percentage}%)</small>`;
-          valText += pctSub;
-          if (isLow) {
-            cardClass += " low";
-            tag = `<div class="comp-tag">⚠️ Below Threshold</div>`;
-          } else {
-            tag = `<div class="comp-tag" style="color:#2e7d32">✓ Normal</div>`;
-          }
+      const compGrid = document.getElementById("det-components");
+      compGrid.innerHTML = comps.map(c => {
+        const item = d.components[c.key];
+        if (!item || item.status === "pending") {
+          return `
+            <div class="comp-card" style="opacity:0.75;background:#f8fafc;border-style:dashed;">
+              <div class="comp-title">${c.label}</div>
+              <div class="comp-val" style="font-size:15px;color:#64748b;">Pending</div>
+              <div class="comp-tag" style="color:#64748b;">No marks yet</div>
+            </div>
+          `;
         }
+        const isLow = item.status === "low";
+        const cardClass = isLow ? "comp-card low" : "comp-card";
+        const valText = `${item.obtained_marks} / ${item.max_marks}`;
+        const pctText = item.percentage !== null && item.percentage !== undefined ? `${item.percentage}%` : "";
+        const tag = isLow 
+          ? `<div class="comp-tag" style="color:#b00020;">⚠️ Below (${pctText})</div>`
+          : `<div class="comp-tag" style="color:#15803d;">✓ Safe (${pctText})</div>`;
 
         return `
           <div class="${cardClass}">
@@ -1620,7 +1981,6 @@
       `;
     }
 
-    // Student Detail: Bar chart per category comparing obtained marks vs max marks
     function renderStudentDetailChart(d, marksThreshold) {
       if (studentDetailChartInstance) {
         studentDetailChartInstance.destroy();
@@ -1629,25 +1989,22 @@
       const catLabels = ["Attendance", "Quiz", "Assignment", "Presentation", "Midterm", "Final-Term"];
       const catKeys = ["attendance", "quiz", "assignment", "presentation", "midterm", "final"];
 
-      // Obtained values (0 if pending)
       const obtainedValues = catKeys.map(k => {
         const comp = d.components[k];
         if (!comp || comp.status === "pending") return 0;
         return comp.obtained_marks !== undefined ? comp.obtained_marks : 0;
       });
 
-      // Max marks values from plan
       const maxValues = catKeys.map(k => {
         const comp = d.components[k];
         return comp ? comp.max_marks : 0;
       });
 
-      // Colors: highlight low categories in red
       const obtainedColors = catKeys.map(k => {
         const comp = d.components[k];
-        if (!comp || comp.status === "pending") return "#cbd5e1"; // grey pending
-        if (comp.status === "low") return "#ef4444"; // red for low
-        return "#1d3a8a"; // deep blue for ok
+        if (!comp || comp.status === "pending") return "#cbd5e1";
+        if (comp.status === "low") return "#ef4444";
+        return "#1d3a8a";
       });
 
       const obtainedBorders = catKeys.map(k => {
@@ -1721,7 +2078,7 @@
       });
     }
 
-    // --- Sidebar Course Creation Handler ---
+    // --- Course Setup Handlers ---
     function clearCourseErrors() {
       document.getElementById("course-success-msg").style.display = "none";
       document.getElementById("course-error-msg").style.display = "none";
@@ -1806,7 +2163,7 @@
         courseSelect.appendChild(opt);
         courseSelect.value = data.id;
 
-        // Trigger load to refresh dashboard with new course
+        updateSetupCourseBadges();
         await load();
 
         setTimeout(() => {
@@ -1822,7 +2179,6 @@
       }
     }
 
-    // --- Sidebar Student Enrollment Handler ---
     function clearEnrollErrors() {
       document.getElementById("enroll-success-msg").style.display = "none";
       document.getElementById("enroll-error-msg").style.display = "none";
@@ -1936,7 +2292,7 @@
       }
     }
 
-    // --- Sidebar Data Entry Handlers ---
+    // --- Quick Attendance & Mark Handlers ---
     function clearAttendanceErrors() {
       document.getElementById("att-success-msg").style.display = "none";
       document.getElementById("att-error-msg").style.display = "none";
@@ -2080,8 +2436,9 @@
                 document.getElementById("form-mark-total-error").textContent = msg;
                 document.getElementById("form-mark-total").classList.add("invalid");
               } else {
-                document.getElementById("form-mark-obtained-error").textContent = msg;
-                document.getElementById("form-mark-obtained").classList.add("invalid");
+                const errBox = document.getElementById("mark-error-msg");
+                errBox.textContent = msg;
+                errBox.style.display = "block";
               }
             });
           } else {
