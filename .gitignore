@@ -1,7 +1,16 @@
-.env
-acadex.db
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 .venv/
-venv/
+*.db
 .pytest_cache/
+# Node
+node_modules/
+.next/
+.env
+.env.local
+# IDE
+.vscode/
+# OS
+.DS_Store
+Thumbs.db
