@@ -409,6 +409,191 @@ def update_assessment_plan(
         "total_max_marks": total
     }
 
+@app.get("/api/courses/{course_id}/marks/grid")
+def get_course_marks_grid(
+    course_id: int,
+    current_user: m.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    course = db.get(m.Course, course_id)
+    if not course or course.faculty_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    plans = db.query(m.AssessmentPlan).filter_by(course_id=course_id).all()
+    default_plan = {
+        "quiz": 15.0,
+        "assignment": 5.0,
+        "midterm": 30.0,
+        "final": 40.0,
+        "presentation": 8.0,
+        "attendance": 7.0,
+    }
+    plan_map = {p.category.lower(): p.max_marks for p in plans}
+    for k, v in default_plan.items():
+        if k not in plan_map:
+            plan_map[k] = v
+
+    quiz_max = plan_map["quiz"]
+    assignment_max = plan_map["assignment"]
+    presentation_max = plan_map["presentation"]
+    midterm_max = plan_map["midterm"]
+    attendance_max = plan_map["attendance"]
+    final_max = plan_map["final"]
+
+    columns = [
+        {"key": "quiz_1", "label": "Quiz 1", "category": "quiz", "assessment": "Quiz 1", "max_marks": quiz_max, "disabled": False},
+        {"key": "quiz_2", "label": "Quiz 2", "category": "quiz", "assessment": "Quiz 2", "max_marks": quiz_max, "disabled": False},
+        {"key": "assignment", "label": "Assignment", "category": "assignment", "assessment": "Assignment", "max_marks": assignment_max, "disabled": False},
+        {"key": "presentation", "label": "Presentation", "category": "presentation", "assessment": "Presentation", "max_marks": presentation_max, "disabled": False},
+        {"key": "midterm", "label": "Midterm", "category": "midterm", "assessment": "Midterm", "max_marks": midterm_max, "disabled": False},
+        {"key": "attendance", "label": "Attendance", "category": "attendance", "assessment": "Attendance", "max_marks": attendance_max, "disabled": False},
+        {"key": "final", "label": "Final-Term", "category": "final", "assessment": "Final", "max_marks": final_max, "disabled": True, "pending": True},
+    ]
+
+    enrollments = db.query(m.Enrollment).filter_by(course_id=course.id).all()
+    enrollments.sort(key=lambda e: e.student.student_code)
+
+    students_data = []
+    for e in enrollments:
+        st = e.student
+        marks = db.query(m.Mark).filter_by(student_id=st.id, course_id=course.id).all()
+        att = db.query(m.Attendance).filter_by(student_id=st.id, course_id=course.id).all()
+
+        marks_dict = {}
+        for mk in marks:
+            cat = (mk.category or "").lower()
+            if cat == "quiz":
+                col_max = quiz_max
+            elif cat == "assignment":
+                col_max = assignment_max
+            elif cat == "presentation":
+                col_max = presentation_max
+            elif cat == "midterm":
+                col_max = midterm_max
+            elif cat == "attendance":
+                col_max = attendance_max
+            else:
+                col_max = mk.total
+
+            if mk.total == col_max:
+                val = mk.obtained
+            elif mk.total and mk.total > 0:
+                val = round((mk.obtained / mk.total) * col_max, 1)
+            else:
+                val = mk.obtained
+            marks_dict[mk.assessment] = val
+
+        # If direct attendance mark wasn't recorded, prefill with attendance calculated from daily records
+        if "Attendance" not in marks_dict and att:
+            att_pct = sum(a.present for a in att) / len(att)
+            marks_dict["Attendance"] = round(att_pct * attendance_max, 1)
+
+        students_data.append({
+            "student_id": st.id,
+            "student_code": st.student_code,
+            "name": st.name,
+            "marks": marks_dict
+        })
+
+    return {
+        "course_id": course.id,
+        "course_code": course.code,
+        "course_name": course.name,
+        "columns": columns,
+        "students": students_data
+    }
+
+@app.post("/api/courses/{course_id}/marks/bulk")
+def save_bulk_marks(
+    course_id: int,
+    payload: list[s.BulkMarkItem],
+    current_user: m.User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    course = db.get(m.Course, course_id)
+    if not course or course.faculty_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Course not found")
+
+    if not payload:
+        return {
+            "course_id": course.id,
+            "course_code": course.code,
+            "saved_count": 0,
+            "message": "No mark changes were provided."
+        }
+
+    enrollments = db.query(m.Enrollment).filter_by(course_id=course.id).all()
+    enrolled_students = {e.student.student_code: e.student for e in enrollments}
+
+    # Step 1: Pre-validate all items before database modification
+    for idx, item in enumerate(payload):
+        student = enrolled_students.get(item.student_code)
+        if not student:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Student '{item.student_code}' is not enrolled in course '{course.code}'."
+            )
+        if item.total <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Row {idx+1}: Total marks must be greater than 0."
+            )
+        if item.obtained < 0 or item.obtained > item.total:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Row {idx+1}: Obtained marks ({item.obtained}) must be between 0 and total ({item.total})."
+            )
+        if item.category.lower() not in s.ALLOWED_PLAN_CATEGORIES:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Row {idx+1}: Category '{item.category}' is not allowed."
+            )
+
+    # Step 2: Atomic Upsert in one transaction
+    try:
+        saved_count = 0
+        for item in payload:
+            student = enrolled_students[item.student_code]
+            category_clean = item.category.lower().strip()
+            assessment_clean = item.assessment.strip()
+
+            existing_mark = db.query(m.Mark).filter(
+                m.Mark.student_id == student.id,
+                m.Mark.course_id == course.id,
+                m.Mark.category == category_clean,
+                m.Mark.assessment == assessment_clean
+            ).first()
+
+            if existing_mark:
+                existing_mark.obtained = float(item.obtained)
+                existing_mark.total = float(item.total)
+            else:
+                new_mark = m.Mark(
+                    student_id=student.id,
+                    course_id=course.id,
+                    category=category_clean,
+                    assessment=assessment_clean,
+                    obtained=float(item.obtained),
+                    total=float(item.total)
+                )
+                db.add(new_mark)
+            saved_count += 1
+
+        db.commit()
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save marks: {str(exc)}"
+        )
+
+    return {
+        "course_id": course.id,
+        "course_code": course.code,
+        "saved_count": saved_count,
+        "message": f"Successfully updated {saved_count} mark{'s' if saved_count != 1 else ''}."
+    }
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")

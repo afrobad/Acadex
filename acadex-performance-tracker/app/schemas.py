@@ -119,6 +119,57 @@ class MarkCreate(BaseModel):
 
 ALLOWED_PLAN_CATEGORIES = {"quiz", "assignment", "midterm", "final", "presentation", "attendance"}
 
+class BulkMarkItem(BaseModel):
+    student_code: str = Field(..., min_length=1, description="Student code / ID")
+    category: str = Field(..., description="quiz, assignment, presentation, midterm, attendance, or final")
+    assessment: str = Field(..., min_length=1, description="Assessment display name")
+    obtained: float = Field(..., description="Obtained marks")
+    total: float = Field(..., description="Total possible marks")
+
+    @field_validator("student_code")
+    @classmethod
+    def validate_student_code(cls, v: str) -> str:
+        cleaned = v.strip()
+        if not cleaned:
+            raise ValueError("Student ID cannot be empty.")
+        return cleaned
+
+    @field_validator("category")
+    @classmethod
+    def validate_category(cls, v: str) -> str:
+        cleaned = v.strip().lower()
+        if cleaned not in ALLOWED_PLAN_CATEGORIES:
+            raise ValueError(f"Category must be one of: {', '.join(sorted(ALLOWED_PLAN_CATEGORIES))}")
+        return cleaned
+
+    @field_validator("assessment")
+    @classmethod
+    def validate_assessment(cls, v: str) -> str:
+        cleaned = v.strip()
+        if not cleaned:
+            raise ValueError("Assessment name cannot be empty.")
+        return cleaned
+
+    @field_validator("total")
+    @classmethod
+    def validate_total(cls, v: float) -> float:
+        if v <= 0:
+            raise ValueError("Total marks must be greater than 0.")
+        return v
+
+    @field_validator("obtained")
+    @classmethod
+    def validate_obtained(cls, v: float) -> float:
+        if v < 0:
+            raise ValueError("Obtained marks cannot be negative.")
+        return v
+
+    @model_validator(mode="after")
+    def validate_obtained_vs_total(self):
+        if self.obtained > self.total:
+            raise ValueError(f"Obtained marks ({self.obtained}) cannot exceed total marks ({self.total}).")
+        return self
+
 class AssessmentPlanItem(BaseModel):
     category: str = Field(..., description="quiz, assignment, midterm, final, presentation, or attendance")
     max_marks: float = Field(..., ge=0, description="Maximum marks weight (must be >= 0)")
