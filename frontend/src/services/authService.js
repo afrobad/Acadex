@@ -1,0 +1,1 @@
+import{apiRequest}from'./api';export function loginFaculty(credentials){return apiRequest('/auth/login',{method:'POST',body:JSON.stringify(credentials)});}
