@@ -12,6 +12,10 @@ const pages = {
         'Course registration',
         'Review academic history and verify prerequisites'
     ],
+    '/student-academic': [
+        'Student academic profile',
+        'Performance, eligibility, history and credit progress'
+    ],
     '/performance': [
         'Performance analysis',
         'Understand student academic performance'

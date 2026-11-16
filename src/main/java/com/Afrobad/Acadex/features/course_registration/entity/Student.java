@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+import com.Afrobad.Acadex.features.course_registration.enums.StudentStatus;
+
 @Entity
 @Table(
     name = "students",
@@ -49,6 +51,15 @@ public class Student {
 
     @Column(name = "program_name", length = 100)
     private String programName;
+    
+    /** Enrollment status. Null (legacy rows) is treated as ACTIVE. */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private StudentStatus status;
+
+    /** Total credits required to graduate. Null falls back to the service default. */
+    @Column(name = "total_program_credits")
+    private Integer totalProgramCredits;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

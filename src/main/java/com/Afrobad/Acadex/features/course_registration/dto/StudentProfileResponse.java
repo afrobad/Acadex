@@ -6,5 +6,6 @@ public record StudentProfileResponse(
         String department,
         String batch,
         Integer currentSemester,
-        String programName
+        String programName,
+        String status
 ) {}

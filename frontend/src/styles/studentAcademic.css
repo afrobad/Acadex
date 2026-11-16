@@ -1,0 +1,590 @@
+/* =========================================================
+   Student Academic Profile
+   Variables live on :root so they work even if a component
+   is rendered outside the .sa wrapper.
+   ========================================================= */
+:root {
+  --sa-bg: #111113;
+  --sa-card: #222224;
+  --sa-card-hover: #17171a;
+  --sa-line: #38383c;
+  --sa-text: #f5f5f7;        /* primary text */
+  --sa-text-soft: #d4d4da;   /* prerequisites, secondary lines */
+  --sa-muted: #a8a8b3;       /* labels, notes */
+  --sa-blue: #3b73e6;
+  --sa-good: #5fe09a;
+  --sa-bad: #ff8a8a;
+}
+
+.sa {
+  color: var(--sa-text);
+}
+.sa * {
+  box-sizing: border-box;
+}
+
+/* ---------- Cards ---------- */
+.sa-card {
+  background: var(--sa-card);
+  color: var(--sa-text);
+  border: 1px solid var(--sa-line);
+  border-radius: 12px;
+  padding: 20px;
+}
+.sa-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+/* ---------- Search (unchanged) ---------- */
+.sa-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  color: var(--sa-muted);
+}
+.sa-search input {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  outline: 0;
+  color: var(--sa-text);
+  font-size: 13px;
+  padding: 8px 4px;
+}
+.sa-search input::placeholder {
+  color: var(--sa-muted);
+}
+.sa-search button {
+  background: var(--sa-blue);
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.sa-search button:disabled {
+  opacity: 0.6;
+}
+.sa-error {
+  margin-top: 14px;
+  color: #ffb4b4;
+  background: #3a1f22;
+  border: 1px solid #6b2c31;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
+}
+.sa-empty {
+  color: var(--sa-muted);
+  text-align: center;
+  font-size: 12px;
+  padding: 28px 12px;
+}
+
+/* ---------- Student overview (horizontal card) ---------- */
+.sa-overview {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.1fr) minmax(260px, 1.4fr) minmax(200px, 0.9fr);
+  gap: 20px;
+  align-items: center;
+}
+.sa-overview-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.sa-overview h3 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--sa-text);
+}
+.sa-overview p {
+  margin: 4px 0 0;
+  color: var(--sa-muted);
+  font-size: 11px;
+}
+.sa-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #dbe7ff;
+  color: #2b5cc4;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.sa-metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.sa-metrics-spaced {
+  margin-top: 22px;
+}
+.sa-metric {
+  border: 1px solid var(--sa-line);
+  border-radius: 12px;
+  padding: 14px;
+}
+.sa-metric span {
+  display: block;
+  color: var(--sa-muted);
+  font-size: 11px;
+}
+.sa-metric strong {
+  display: block;
+  font-size: 28px;
+  margin-top: 10px;
+  color: var(--sa-text);
+}
+.sa-overview .sa-metric strong {
+  font-size: 26px;
+}
+.sa-metric small {
+  font-size: 15px;
+  color: var(--sa-muted);
+  margin-left: 2px;
+}
+.sa-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.sa-overview-head .sa-pills {
+  margin-top: 10px;
+}
+.sa-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+.sa-status-active {
+  background: #dcf8e6;
+  color: #1d7a4a;
+}
+.sa-status-inactive {
+  background: #fdf0d0;
+  color: #8a6414;
+}
+.sa-status-dropped_out {
+  background: #fde0e0;
+  color: #a63232;
+}
+.sa-pill-term {
+  background: #2e2e32;
+  color: var(--sa-text-soft);
+}
+
+/* ---------- "View academic performance" button ---------- */
+.sa-link-btn {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 14px;
+  background: transparent;
+  color: var(--sa-text);
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+}
+.sa-link-btn:hover {
+  border-color: var(--sa-blue);
+  background: var(--sa-card-hover);
+}
+.sa-overview .sa-link-btn {
+  margin-top: 0;
+}
+
+/* ---------- Tabs ---------- */
+.sa-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--sa-line);
+  margin: -6px -6px 16px;
+  overflow-x: auto;
+}
+.sa-tabs button {
+  background: none;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--sa-muted);
+  padding: 10px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.sa-tabs button:hover {
+  color: var(--sa-text);
+}
+.sa-tabs button.on {
+  color: var(--sa-text);
+  border-bottom-color: var(--sa-blue);
+}
+
+/* ---------- Notes & headings ---------- */
+.sa-note {
+  color: var(--sa-muted);
+  font-size: 11px;
+  line-height: 1.6;
+  margin: 0 0 14px;
+}
+.sa-note b {
+  color: var(--sa-text);
+}
+.sa-h {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--sa-text);
+}
+.sa-list {
+  display: grid;
+  gap: 10px;
+}
+
+/* ---------- Semester header ---------- */
+.sa-semester-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+  border: 1px solid var(--sa-line);
+  border-radius: 12px;
+  background: var(--sa-card);
+  color: var(--sa-text);
+}
+.sa-semester-header h3 {
+  font-size: 21px;
+  font-weight: 700;
+  margin: 5px 0 0;
+  color: var(--sa-text);
+}
+.sa-semester-badge {
+  padding: 6px 11px;
+  border-radius: 20px;
+  background: #2b3b55;
+  color: #a8c2f5;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ---------- 3-column summary ---------- */
+.sa-course-summary-3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sa-course-summary-3 > div {
+  padding: 14px;
+  border: 1px solid var(--sa-line);
+  border-radius: 10px;
+  background: var(--sa-card);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.sa-course-summary-3 b {
+  font-size: 22px;
+  color: var(--sa-text);
+}
+.sa-course-summary-3 span {
+  font-size: 12px;
+  color: var(--sa-muted);
+}
+
+/* ---------- Course card (works for <div>, <article> or <button>) ---------- */
+.sa-course {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 15px;
+  width: 100%;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+  text-align: left;
+  font-family: inherit;
+  border: 1px solid var(--sa-line);
+  border-radius: 12px;
+  background: var(--sa-card);
+  color: var(--sa-text);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.sa-course-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Course code + name: always bright (visible for blocked courses too) */
+.sa-course h4 {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 8px;
+  color: var(--sa-text);
+}
+.sa-course h4 b {
+  font-weight: 700;
+  color: var(--sa-text);
+}
+
+/* Text lines inside a card keep their OWN colour in every state */
+.sa-course p {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.sa-course .sa-prereq {
+  color: var(--sa-text-soft);
+  font-weight: 500;
+}
+.sa-course .sa-muted {
+  color: var(--sa-muted);
+}
+.sa-course .sa-good {
+  color: var(--sa-good);
+  font-weight: 600;
+}
+.sa-course .sa-bad {
+  color: var(--sa-bad);
+  font-weight: 600;
+}
+
+/* Hover: darker background, blue border, ONLY the title turns pure white */
+.sa-course:not(:disabled):hover {
+  background: var(--sa-card-hover);
+  border-color: var(--sa-blue);
+}
+.sa-course:not(:disabled):hover h4,
+.sa-course:not(:disabled):hover h4 b {
+  color: #ffffff;
+}
+
+.sa-course:disabled {
+  opacity: 0.85;
+}
+
+/* Standalone helper colours (outside course cards) */
+.sa-good {
+  color: var(--sa-good);
+}
+.sa-bad {
+  color: var(--sa-bad);
+}
+.sa-muted {
+  color: var(--sa-muted);
+}
+
+/* ---------- Badges ---------- */
+.sa-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.sa-badge-eligible,
+.sa-badge-completed {
+  background: #dcf8e6;
+  color: #1d7a4a;
+  border: 1px solid #9ee0bb;
+}
+.sa-badge-blocked,
+.sa-badge-failed {
+  background: #fde0e0;
+  color: #a63232;
+  border: 1px solid #f1a5a5;
+}
+.sa-badge-not-completed,
+.sa-badge-dropped {
+  background: #fdf0d0;
+  color: #8a6414;
+  border: 1px solid #ecd08a;
+}
+.sa-badge-retake {
+  background: #e4e4ff;
+  color: #4a4ab8;
+  border: 1px solid #b6b6f0;
+}
+.sa-badge-enrolled {
+  background: #dbe7ff;
+  color: #2b5cc4;
+  border: 1px solid #a8c2f5;
+}
+
+/* ---------- Academic history table ----------
+   Overrides global th/td styles from the light theme. */
+.sa-table-wrap {
+  overflow-x: auto;
+}
+.sa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.sa-table th {
+  background: transparent;
+  color: var(--sa-muted);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--sa-line);
+}
+.sa-table td {
+  color: var(--sa-text);
+  font-size: 12px;
+  padding: 11px 8px;
+  border-bottom: 1px solid #2c2c30;
+}
+.sa-table td.sa-muted {
+  color: var(--sa-muted);
+}
+.sa-table tbody tr:hover td {
+  background: var(--sa-card-hover);
+}
+
+/* ---------- Credit progress ---------- */
+.sa-progress-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--sa-text);
+  margin: 14px 0 6px;
+}
+.sa-bar {
+  height: 7px;
+  background: #2e2e32;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.sa-bar i {
+  display: block;
+  height: 100%;
+  background: var(--sa-blue);
+  border-radius: 99px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) {
+  .sa-overview {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .sa-course-summary-3 {
+    grid-template-columns: 1fr;
+  }
+  .sa-semester-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* ---------- Academic history ---------- */
+.sa-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.sa-filters button {
+  background: transparent;
+  color: var(--sa-muted);
+  border: 1px solid var(--sa-line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+}
+.sa-filters button span {
+  margin-left: 4px;
+  color: var(--sa-text-soft);
+}
+.sa-filters button:hover {
+  color: var(--sa-text);
+  border-color: var(--sa-blue);
+}
+.sa-filters button.on {
+  background: #2b3b55;
+  color: #fff;
+  border-color: var(--sa-blue);
+}
+
+.sa-table .sa-code {
+  font-weight: 700;
+  color: #fff;
+  white-space: nowrap;
+}
+.sa-table .sa-grade {
+  font-weight: 700;
+  color: var(--sa-text);
+}
+.sa-table .sa-sub {
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--sa-muted);
+}
+
+/* ---------- Course card click experience ---------- */
+.sa-course {
+  cursor: pointer;
+  user-select: none;                      /* no accidental text selection on fast clicks */
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;             /* removes the tap delay on touch devices */
+  transition: background-color 0.12s ease,
+              border-color 0.12s ease,
+              transform 0.08s ease;
+}
+
+/* pressed feedback: the card visibly "gives" the instant you click */
+.sa-course:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+/* keyboard focus */
+.sa-course:focus-visible {
+  outline: 2px solid var(--sa-blue);
+  outline-offset: 2px;
+}
+
+/* blocked and completed cards are not clickable */
+.sa-course:disabled {
+  cursor: not-allowed;
+}
+.sa-course-completed:disabled {
+  cursor: default;
+}
+
+/* eligible: subtle green edge so it reads as "can be clicked" */
+.sa-course-eligible {
+  border-left: 3px solid #3fae74;
+}
+
+/* enrolled: clearly different from eligible */
+.sa-course-enrolled {
+  background: #15261d;
+  border-color: #2f8f5b;
+  border-left: 3px solid #47c07f;
+}
+.sa-course-enrolled:not(:disabled):hover {
+  background: #11201a;
+  border-color: #47c07f;
+}
+
+/* blocked: red edge */
+.sa-course-blocked {
+  border-left: 3px solid #c95a5a;
+}

@@ -15,10 +15,10 @@ import { useAuth } from '../../context/AuthContext';
 
 const links = [
     ['/dashboard', 'Dashboard', LayoutDashboard],
-    ['/registration', 'Course registration', BookOpenCheck],
-    ['/performance', 'Performance analysis', Activity],
-    ['/early-warnings', 'Early warnings', ShieldAlert],
-    ['/ai-advisor', 'AI academic advisor', BrainCircuit]
+    ['/registration', 'Course Registration', BookOpenCheck],
+    ['/performance', 'Performance Analysis', Activity],
+    ['/early-warnings', 'Early Warnings', ShieldAlert],
+    ['/ai-advisor', 'AI Academic Advisor', BrainCircuit]
 ];
 
 export default function Sidebar() {

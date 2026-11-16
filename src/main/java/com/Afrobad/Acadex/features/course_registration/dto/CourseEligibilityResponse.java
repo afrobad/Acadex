@@ -8,6 +8,7 @@ public record CourseEligibilityResponse(
         String courseName,
         BigDecimal credits,
         boolean eligible,
+        List<String> prerequisites,
         List<String> missingPrerequisites,
         boolean alreadyCompleted,
         boolean alreadyEnrolled,
