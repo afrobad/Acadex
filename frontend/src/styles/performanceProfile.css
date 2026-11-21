@@ -1,0 +1,157 @@
+.sp-wrap {
+  margin-top: 16px;
+}
+.sp-back {
+  margin: 12px 2px 0;
+  font-size: 12px;
+}
+.sp-back a {
+  color: var(--sa-muted);
+  text-decoration: none;
+}
+.sp-back a:hover {
+  color: var(--sa-text);
+}
+
+.sp-card {
+  padding: 24px;
+}
+.sp-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.sp-head h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--sa-text);
+}
+.sp-head p {
+  margin: 5px 0 0;
+  font-size: 11px;
+  color: var(--sa-muted);
+}
+
+.sp-level {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.sp-level-urgent  { background: #fde0e0; color: #a63232; border: 1px solid #f1a5a5; }
+.sp-level-monitor { background: #fdf0d0; color: #8a6414; border: 1px solid #ecd08a; }
+.sp-level-ontrack { background: #dcf8e6; color: #1d7a4a; border: 1px solid #9ee0bb; }
+
+.sp-body {
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 36px;
+  align-items: start;
+}
+
+/* bars */
+.sp-bars {
+  display: grid;
+  gap: 18px;
+}
+.sp-row-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--sa-text);
+  margin-bottom: 7px;
+}
+.sp-row-head b {
+  font-weight: 700;
+}
+.sp-track {
+  height: 8px;
+  background: #2e2e32;
+  border-radius: 99px;
+  overflow: hidden;
+}
+.sp-track i {
+  display: block;
+  height: 100%;
+  background: var(--sa-blue);
+  border-radius: 99px;
+}
+.sp-track i.low {
+  background: #d65c5c;
+}
+
+/* alerts */
+.sp-alerts h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--sa-text);
+}
+.sp-alerts ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+.sp-alerts li {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sa-text-soft);
+}
+.sp-warn {
+  margin-right: 6px;
+  color: #f5c451;
+}
+.sp-reco {
+  margin: 14px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sa-text);
+  font-weight: 600;
+}
+
+/* actions */
+.sp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.sp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--sa-line);
+  background: transparent;
+  color: var(--sa-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.sp-btn:hover:not(:disabled) {
+  border-color: var(--sa-blue);
+}
+.sp-btn:disabled {
+  opacity: 0.7;
+}
+.sp-btn-primary {
+  background: var(--sa-blue);
+  border-color: var(--sa-blue);
+  color: #fff;
+}
+.sp-note {
+  margin: 12px 0 0;
+}
+
+@media (max-width: 800px) {
+  .sp-body {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
